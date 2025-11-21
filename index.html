@@ -287,9 +287,10 @@ const firebaseConfig = {
             <div className="container mx-auto flex justify-between items-center">
               <Logo />
               <div className="flex gap-3">
-                <Button className="border" onClick={()=>setShowInstructions(true)}>How to Use</Button>
-                {isAdminFlag && <Link to={createPageUrl('Admin')} className="px-3 py-2 rounded bg-orange-500 text-white">Admin</Link>}
-              </div>
+  <Button className="border" onClick={()=>setShowInstructions(true)}>How to Use</Button>
+  <Link to={createPageUrl('Admin')} className="px-3 py-2 rounded bg-orange-500 text-white">Admin</Link>
+</div>
+
             </div>
           </header>
 
