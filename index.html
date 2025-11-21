@@ -182,30 +182,27 @@ const firebaseConfig = {
     /*******************************
      * BookmarkletCard and Modal
      *******************************/
-    function BookmarkletCard({ bookmarklet }) {
-      const copy = async () => {
-        try {
-          await navigator.clipboard.writeText(bookmarklet.code || '');
-          alert('Bookmarklet copied to clipboard!');
-        } catch {
-          alert('Copy failed — select the code and copy manually.');
-        }
-      };
-
-      return (
-        <div className="border p-4 rounded bg-white">
-          <h4 className="font-semibold text-gray-900">{bookmarklet.title || bookmarklet.name || 'Untitled'}</h4>
-          {bookmarklet.description && <p className="text-sm text-gray-600">{bookmarklet.description}</p>}
-          <pre className="mt-2 p-2 bg-gray-100 rounded text-xs overflow-x-auto font-mono">{(bookmarklet.code || '').substring(0, 300)}</pre>
-          <div className="mt-2 flex gap-2">
-            <Button className="bg-orange-500 text-white" onClick={copy}>Copy</Button>
-            <Button className="border" onClick={() => {
-              alert('Drag this to your bookmarks bar or copy:\n\n' + (bookmarklet.code || ''));
-            }}>Get Link</Button>
-          </div>
-        </div>
-      );
+function BookmarkletCard({ bookmarklet }) {
+  const copy = async () => {
+    try {
+      await navigator.clipboard.writeText(bookmarklet.code || '');
+      alert('Bookmarklet copied to clipboard!');
+    } catch {
+      alert('Copy failed — select the code and copy manually.');
     }
+  };
+
+  return (
+    <div className="border p-4 rounded bg-white">
+      <h4 className="font-semibold text-gray-900">{bookmarklet.title || bookmarklet.name || 'Untitled'}</h4>
+      {bookmarklet.description && <p className="text-sm text-gray-600">{bookmarklet.description}</p>}
+      <div className="mt-2 flex gap-2">
+        <Button className="bg-orange-500 text-white" onClick={copy}>Copy</Button>
+      </div>
+    </div>
+  );
+}
+
 
     function InstructionsModal({ open, onClose }) {
       if (!open) return null;
