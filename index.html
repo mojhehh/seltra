@@ -407,7 +407,7 @@ const firebaseConfig = {
             setCategories(arr);
           } else setCategories([]);
           if (marks) {
-            const arr = Object.keys(marks).map(k => ({ id:k, ...marks[k] })));
+           const arr = Object.keys(marks).map(k => ({ id:k, ...marks[k] }));
             arr.sort((a,b)=>(a.order||0)-(b.order||0));
             setBookmarklets(arr);
           } else setBookmarklets([]);
