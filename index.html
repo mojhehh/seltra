@@ -30,7 +30,6 @@
     /*******************************
      *  CONFIG — Replace this!
      *******************************/
-   // For Firebase JS SDK v7.20.0 and later, measurementId is optional
 const firebaseConfig = {
   apiKey: "AIzaSyD-7dcoBdsHa_sD8gRmvrifyLGP3HKKfI4",
   authDomain: "seltra.firebaseapp.com",
@@ -55,12 +54,6 @@ const firebaseConfig = {
 
     /*******************************
      *  firebaseDB wrapper (Realtime DB)
-     *
-     *  Methods:
-     *   - get(path) => returns value or null
-     *   - push(path, data) => pushes and returns new key
-     *   - delete(path) => removes node
-     *   - listen(path, cb) => registers on('value') and returns unsubscribe fn
      *******************************/
     const firebaseDB = {
       get: async (path) => {
@@ -81,18 +74,12 @@ const firebaseConfig = {
         const ref = firebase.database().ref(path);
         const handler = (snap) => cb(snap.val());
         ref.on('value', handler);
-        // return unsubscribe function
         return () => ref.off('value', handler);
       }
     };
 
     /*******************************
      *  firebaseAuth wrapper
-     *
-     *  - signIn(email, pw)
-     *  - signOut()
-     *  - getCurrentUser()
-     *  - isAdmin() // checks /admins/{uid} === true
      *******************************/
     const firebaseAuth = {
       signIn: async (email, password) => {
@@ -109,14 +96,18 @@ const firebaseConfig = {
       },
       isAdmin: async () => {
         // returns true if /admins/{uid} is truthy
-        const user = firebase.auth?.().currentUser || (firebaseAuth.getCurrentUser && firebaseAuth.getCurrentUser());
+        const user = firebase.auth && firebase.auth().currentUser;
         if (!user) return false;
         const admins = await firebaseDB.get('admins/' + user.uid);
         return !!admins;
+      },
+      onAuthStateChanged: (cb) => {
+        if (!firebase.auth) return () => {};
+        return firebase.auth().onAuthStateChanged(cb);
       }
     };
 
-    // small helper url
+    // helper
     function createPageUrl(name) {
       if (name.toLowerCase() === 'home') return '#/';
       if (name.toLowerCase() === 'admin') return '#/admin';
@@ -124,14 +115,14 @@ const firebaseConfig = {
     }
 
     /*******************************
-     * Minimal UI components used by both pages
+     * Minimal UI components
      *******************************/
     function Logo({ size }) {
       return <div className={size === 'large' ? 'text-3xl font-bold' : 'text-xl font-bold'}>🔖 Bookmarklets</div>;
     }
 
-    function Button({ children, className = '', onClick, type = 'button' }) {
-      return <button type={type} onClick={onClick} className={`px-3 py-2 rounded ${className}`}>{children}</button>;
+    function Button({ children, className = '', onClick, type = 'button', disabled }) {
+      return <button type={type} onClick={onClick} disabled={disabled} className={`px-3 py-2 rounded ${disabled ? 'opacity-60 cursor-not-allowed' : ''} ${className}`}>{children}</button>;
     }
 
     function Input(props) {
@@ -150,19 +141,12 @@ const firebaseConfig = {
       return <div className={`bg-white rounded shadow-sm p-4 ${className}`}>{children}</div>;
     }
 
-    function CardHeader({ children }) {
-      return <div className="mb-2">{children}</div>;
-    }
-    function CardTitle({ children }) {
-      return <h3 className="text-lg font-semibold">{children}</h3>;
-    }
-    function CardContent({ children }) {
-      return <div>{children}</div>;
-    }
+    function CardHeader({ children }) { return <div className="mb-2">{children}</div>; }
+    function CardTitle({ children }) { return <h3 className="text-lg font-semibold">{children}</h3>; }
+    function CardContent({ children }) { return <div>{children}</div>; }
 
-    // replace Link -> anchor that manipulates hash
     function Link({ to, children, className = '' }) {
-      return <a href={to} className={className} onClick={(e) => { /* let default anchor handle it */ }}>{children}</a>;
+      return <a href={to} className={className} onClick={(e)=>{ /* default anchor works */ }}>{children}</a>;
     }
 
     /*******************************
@@ -186,7 +170,6 @@ const firebaseConfig = {
           <div className="mt-2 flex gap-2">
             <Button className="bg-orange-500 text-white" onClick={copy}>Copy</Button>
             <Button className="border" onClick={() => {
-              const url = 'javascript:' + encodeURIComponent(bookmarklet.code || '');
               alert('Drag this to your bookmarks bar or copy:\n\n' + (bookmarklet.code || ''));
             }}>Get Link</Button>
           </div>
@@ -210,7 +193,7 @@ const firebaseConfig = {
     }
 
     /*******************************
-     * Home Page (uses firebaseDB listeners)
+     * Home Page
      *******************************/
     function Home() {
       const [showInstructions, setShowInstructions] = useState(false);
@@ -220,22 +203,28 @@ const firebaseConfig = {
       const [loading, setLoading] = useState(true);
 
       useEffect(() => {
-        // auth check
-        const unsubAuth = () => {
-          // nothing for now; we don't attach auth state change listener here
-        };
+        // listen to auth changes so admin button state updates after login
+        const unsub = firebaseAuth.onAuthStateChanged(async (user) => {
+          if (user) {
+            try {
+              const admin = await firebaseAuth.isAdmin();
+              setIsAdminFlag(admin);
+            } catch {
+              setIsAdminFlag(false);
+            }
+          } else {
+            setIsAdminFlag(false);
+          }
+        });
 
-        checkAdmin();
+        // load data and realtime listeners
         loadData();
-
-        // real-time listeners using our firebaseDB.listen wrapper
         const offCats = firebaseDB.listen('categories', (data) => {
           if (!data) { setCategories([]); return; }
           const arr = Object.keys(data).map(k => ({ id: k, ...data[k] }));
           arr.sort((a,b) => (a.order||0)-(b.order||0));
           setCategories(arr);
         });
-
         const offMarks = firebaseDB.listen('bookmarklets', (data) => {
           if (!data) { setBookmarklets([]); return; }
           const arr = Object.keys(data).map(k => ({ id: k, ...data[k] }));
@@ -246,18 +235,9 @@ const firebaseConfig = {
         return () => {
           offCats();
           offMarks();
-          unsubAuth();
+          if (unsub) unsub();
         };
       }, []);
-
-      async function checkAdmin() {
-        try {
-          const admin = await firebaseAuth.isAdmin();
-          setIsAdminFlag(admin);
-        } catch (e) {
-          setIsAdminFlag(false);
-        }
-      }
 
       async function loadData() {
         setLoading(true);
@@ -287,10 +267,10 @@ const firebaseConfig = {
             <div className="container mx-auto flex justify-between items-center">
               <Logo />
               <div className="flex gap-3">
-  <Button className="border" onClick={()=>setShowInstructions(true)}>How to Use</Button>
-  <Link to={createPageUrl('Admin')} className="px-3 py-2 rounded bg-orange-500 text-white">Admin</Link>
-</div>
-
+                <Button className="border" onClick={()=>setShowInstructions(true)}>How to Use</Button>
+                {/* Admin always visible; AdminPage will require login */}
+                <Link to={createPageUrl('Admin')} className="px-3 py-2 rounded bg-orange-500 text-white">Admin</Link>
+              </div>
             </div>
           </header>
 
@@ -350,47 +330,68 @@ const firebaseConfig = {
       });
 
       useEffect(() => {
-        checkAuth();
-      }, []);
+        // listen to auth state so admin UI updates immediately after login
+        const unsub = firebaseAuth.onAuthStateChanged(async (user) => {
+          if (!user) {
+            setShowLogin(true);
+            setIsAdmin(false);
+            setLoading(false);
+            return;
+          }
+          try {
+            const adminStatus = await firebaseAuth.isAdmin();
+            if (!adminStatus) {
+              setShowLogin(true);
+              setIsAdmin(false);
+              setLoading(false);
+              return;
+            }
+            setIsAdmin(true);
+            setShowLogin(false);
+            await loadData();
+          } catch (e) {
+            console.error(e);
+            setShowLogin(true);
+            setIsAdmin(false);
+            setLoading(false);
+          }
+        });
 
-      async function checkAuth() {
-        setLoading(true);
-        try {
-          const user = firebase.auth?.().currentUser;
+        // initial check (in case user already signed in)
+        (async () => {
+          setLoading(true);
+          const user = firebaseAuth.getCurrentUser();
           if (!user) {
             setShowLogin(true);
             setLoading(false);
-            return;
+          } else {
+            try {
+              const adminStatus = await firebaseAuth.isAdmin();
+              if (!adminStatus) {
+                setShowLogin(true);
+                setLoading(false);
+              } else {
+                setIsAdmin(true);
+                setShowLogin(false);
+                await loadData();
+              }
+            } catch (e) {
+              console.error(e);
+              setShowLogin(true);
+              setLoading(false);
+            }
           }
-          const adminStatus = await firebaseAuth.isAdmin();
-          if (!adminStatus) {
-            setShowLogin(true);
-            setLoading(false);
-            return;
-          }
-          setIsAdmin(true);
-          await loadData();
-        } catch (e) {
-          console.error(e);
-          setShowLogin(true);
-          setLoading(false);
-        }
-      }
+        })();
+
+        return () => { if (unsub) unsub(); };
+      }, []);
 
       async function handleLogin(e) {
         e.preventDefault();
         setLoginError('');
         try {
           await firebaseAuth.signIn(email, password);
-          const adminStatus = await firebaseAuth.isAdmin();
-          if (!adminStatus) {
-            setLoginError('You are not authorized as an admin');
-            await firebaseAuth.signOut();
-            return;
-          }
-          setIsAdmin(true);
-          setShowLogin(false);
-          loadData();
+          // onAuthStateChanged listener will handle admin check and load data
         } catch (err) {
           setLoginError(err.message || 'Login failed');
         }
@@ -406,41 +407,73 @@ const firebaseConfig = {
             setCategories(arr);
           } else setCategories([]);
           if (marks) {
-            const arr = Object.keys(marks).map(k => ({ id:k, ...marks[k] }));
+            const arr = Object.keys(marks).map(k => ({ id:k, ...marks[k] })));
             arr.sort((a,b)=>(a.order||0)-(b.order||0));
             setBookmarklets(arr);
           } else setBookmarklets([]);
         } catch (e) {
           console.error(e);
+          alert('Failed to load admin data: ' + (e.message || e));
         }
         setLoading(false);
       }
 
       async function handleAddCategory(e) {
         e.preventDefault();
-        await firebaseDB.push('categories', categoryForm);
-        setCategoryForm({ name: '', description: '', order: 0 });
-        loadData();
+        try {
+          if (!categoryForm.name) { alert('Category name required'); return; }
+          await firebaseDB.push('categories', categoryForm);
+          setCategoryForm({ name: '', description: '', order: 0 });
+          await loadData();
+          alert('Category added');
+        } catch (err) {
+          console.error(err);
+          alert('Failed to add category: ' + (err.message || err));
+        }
       }
 
       async function handleDeleteCategory(id) {
         if (!confirm('Delete this category?')) return;
-        await firebaseDB.delete(`categories/${id}`);
-        loadData();
+        try {
+          await firebaseDB.delete(`categories/${id}`);
+          await loadData();
+          alert('Category deleted');
+        } catch (err) {
+          console.error(err);
+          alert('Failed to delete category: ' + (err.message || err));
+        }
       }
 
       async function handleAddBookmarklet(e) {
         e.preventDefault();
-        const minifiedCode = (bookmarkletForm.code || '').replace(/\s+/g, ' ').trim();
-        await firebaseDB.push('bookmarklets', { ...bookmarkletForm, code: minifiedCode });
-        setBookmarkletForm({ title: '', description: '', code: '', categoryId: '', order: 0 });
-        loadData();
+        try {
+          // validate
+          if (!bookmarkletForm.title || !bookmarkletForm.code || !bookmarkletForm.categoryId) {
+            alert('Please fill Title, Code, and select a Category.');
+            return;
+          }
+          // single-line minify
+          const minifiedCode = (bookmarkletForm.code || '').replace(/\s+/g, ' ').trim();
+          const pushKey = await firebaseDB.push('bookmarklets', { ...bookmarkletForm, code: minifiedCode });
+          setBookmarkletForm({ title: '', description: '', code: '', categoryId: '', order: 0 });
+          await loadData();
+          alert('Bookmarklet added (id: ' + pushKey + ')');
+        } catch (err) {
+          console.error(err);
+          alert('Failed to add bookmarklet: ' + (err.message || err));
+        }
       }
 
       async function handleDeleteBookmarklet(id) {
         if (!confirm('Delete this bookmarklet?')) return;
-        await firebaseDB.delete(`bookmarklets/${id}`);
-        loadData();
+        try {
+          await firebaseDB.delete(`bookmarklets/${id}`);
+          await loadData();
+          alert('Bookmarklet deleted');
+        } catch (err) {
+          console.error(err);
+          alert('Failed to delete bookmarklet: ' + (err.message || err));
+        }
       }
 
       if (showLogin) {
@@ -455,11 +488,11 @@ const firebaseConfig = {
                 <form onSubmit={handleLogin} className="space-y-4">
                   <div>
                     <Label>Email</Label>
-                    <Input type="email" value={email} onChange={(e)=>setEmail(e.target.value)} placeholder="admin@example.com" required />
+                    <Input type="email" value={email} onChange={(e)=>setEmail(e.target.value)} placeholder="admin@example.com" required autoComplete="email" />
                   </div>
                   <div>
                     <Label>Password</Label>
-                    <Input type="password" value={password} onChange={(e)=>setPassword(e.target.value)} placeholder="••••••" required />
+                    <Input type="password" value={password} onChange={(e)=>setPassword(e.target.value)} placeholder="••••••" required autoComplete="current-password" />
                   </div>
                   {loginError && <div className="bg-red-50 border border-red-200 text-red-700 p-3 rounded">{loginError}</div>}
                   <Button type="submit" className="w-full bg-orange-500 text-white">Sign In</Button>
