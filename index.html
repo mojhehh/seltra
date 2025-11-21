@@ -117,9 +117,39 @@ const firebaseConfig = {
     /*******************************
      * Minimal UI components
      *******************************/
-    function Logo({ size }) {
-      return <div className={size === 'large' ? 'text-3xl font-bold' : 'text-xl font-bold'}>🔖 Bookmarklets</div>;
-    }
+  function Logo({ size = "default" }) {
+  const sizes = {
+    small: "h-8",
+    default: "h-12",
+    large: "h-16"
+  };
+
+  return (
+    <div className={`flex items-center gap-3 ${sizes[size]}`}>
+      <svg 
+        viewBox="0 0 48 48" 
+        className={sizes[size]}
+        fill="none" 
+        xmlns="http://www.w3.org/2000/svg"
+      >
+        <defs>
+          <linearGradient id="orangeGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stopColor="#FF8C42" />
+            <stop offset="100%" stopColor="#FF6B35" />
+          </linearGradient>
+        </defs>
+        <rect x="8" y="12" width="32" height="6" rx="3" fill="url(#orangeGradient)" />
+        <rect x="8" y="21" width="24" height="6" rx="3" fill="url(#orangeGradient)" opacity="0.7" />
+        <rect x="8" y="30" width="28" height="6" rx="3" fill="url(#orangeGradient)" opacity="0.5" />
+        <circle cx="38" cy="24" r="6" fill="url(#orangeGradient)" />
+      </svg>
+      <span className="font-bold text-3xl tracking-tight bg-gradient-to-r from-orange-500 to-orange-600 bg-clip-text text-transparent">
+        seltra
+      </span>
+    </div>
+  );
+}
+
 
     function Button({ children, className = '', onClick, type = 'button', disabled }) {
       return <button type={type} onClick={onClick} disabled={disabled} className={`px-3 py-2 rounded ${disabled ? 'opacity-60 cursor-not-allowed' : ''} ${className}`}>{children}</button>;
@@ -548,7 +578,7 @@ const firebaseConfig = {
                       <Label>Order</Label>
                       <Input type="number" value={categoryForm.order} onChange={(e)=>setCategoryForm({...categoryForm, order: parseInt(e.target.value || '0')})} min="0" />
                     </div>
-                    <Button className="bg-orange-500 text-white">Add Category</Button>
+                   <Button type="submit" className="bg-orange-500 text-white">Add Category</Button>
                   </form>
                 </CardContent>
               </Card>
@@ -604,7 +634,7 @@ const firebaseConfig = {
                       <Label>Order</Label>
                       <Input type="number" value={bookmarkletForm.order} onChange={(e)=>setBookmarkletForm({...bookmarkletForm, order: parseInt(e.target.value || '0')})} min="0" />
                     </div>
-                    <Button className="bg-orange-500 text-white">Add Bookmarklet</Button>
+                  <Button type="submit" className="bg-orange-500 text-white">Add Bookmarklet</Button>
                   </form>
                 </CardContent>
               </Card>
