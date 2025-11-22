@@ -300,7 +300,13 @@ function BookmarkletCard({ bookmarklet }) {
               <div className="flex gap-3">
                 <Button className="border" onClick={()=>setShowInstructions(true)}>How to Use</Button>
                 {/* Admin always visible; AdminPage will require login */}
-                <Link to={createPageUrl('Admin')} className="px-3 py-2 rounded bg-orange-500 text-white">Admin</Link>
+<Link to={createPageUrl('Admin')} className="px-1 py-1 rounded">
+  <img
+    src="https://raw.githubusercontent.com/mojhehh/seltra/28261352f4e6f9a50759d616fda72876a9a39c17/Admin.png"
+    alt="Admin"
+    className="h-8 w-auto"
+  />
+</Link>
               </div>
             </div>
           </header>
