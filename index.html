@@ -186,19 +186,102 @@ const firebaseConfig = {
      * BookmarkletCard and Modal
      *******************************/
 function BookmarkletCard({ bookmarklet }) {
+
+  // --- FULL TOAST CSS (injected into document once) ---
+  if (!window.__toastStylesAdded) {
+    window.__toastStylesAdded = true;
+    const style = document.createElement("style");
+    style.innerHTML = `
+      .toast {
+        position: fixed;
+        top: 20px;
+        left: 50%;
+        transform: translateX(-50%) translateY(-100px);
+        background: white;
+        border: 2px solid orange;
+        border-radius: 12px;
+        padding: 15px 40px;
+        min-width: 200px;
+        max-width: 400px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        animation: slide-in 0.4s ease forwards;
+        z-index: 9999;
+        font-weight: bold;
+        font-size: 16px;
+        text-align: center;
+      }
+
+      .toast-bar {
+        width: 100%;
+        height: 5px;
+        background: orange;
+        border-radius: 5px;
+        margin-top: 10px;
+        animation: shrink 2s linear forwards;
+      }
+
+      .toast-slide-up {
+        animation: slide-out 0.4s ease forwards;
+      }
+
+      @keyframes slide-in {
+        from { transform: translateX(-50%) translateY(-100px); opacity: 0; }
+        to { transform: translateX(-50%) translateY(0); opacity: 1; }
+      }
+
+      @keyframes slide-out {
+        from { transform: translateX(-50%) translateY(0); opacity: 1; }
+        to { transform: translateX(-50%) translateY(-100px); opacity: 0; }
+      }
+
+      @keyframes shrink {
+        from { width: 100%; }
+        to { width: 0%; }
+      }
+    `;
+    document.head.appendChild(style);
+  }
+
+  // --- FULL TOAST FUNCTION ---
+  function showToast(message) {
+    const toast = document.createElement('div');
+    toast.className = 'toast';
+    toast.innerHTML = `<div>${message}</div><div class="toast-bar"></div>`;
+    document.body.appendChild(toast);
+
+    setTimeout(() => {
+      toast.classList.add('toast-slide-up');
+    }, 2000);
+
+    setTimeout(() => {
+      toast.remove();
+    }, 2500);
+  }
+
+  // --- YOUR EXACT COPY FUNCTION, BUT WITH TOAST ---
   const copy = async () => {
     try {
       await navigator.clipboard.writeText(bookmarklet.code || '');
-      alert('Bookmarklet copied to clipboard!');
+      showToast('Bookmarklet copied to clipboard!');
     } catch {
-      alert('Copy failed — select the code and copy manually.');
+      showToast('Copy failed — select the code and copy manually.');
     }
   };
 
+  // --- YOUR ORIGINAL JSX (unchanged) ---
   return (
     <div className="border p-4 rounded bg-white">
-      <h4 className="font-semibold text-gray-900">{bookmarklet.title || bookmarklet.name || 'Untitled'}</h4>
-      {bookmarklet.description && <p className="text-sm text-gray-600">{bookmarklet.description}</p>}
+      <h4 className="font-semibold text-gray-900">
+        {bookmarklet.title || bookmarklet.name || 'Untitled'}
+      </h4>
+
+      {bookmarklet.description && (
+        <p className="text-sm text-gray-600">{bookmarklet.description}</p>
+      )}
+
       <div className="mt-2 flex gap-2">
         <Button 
           className="p-0 flex items-center justify-center" 
@@ -214,6 +297,7 @@ function BookmarkletCard({ bookmarklet }) {
     </div>
   );
 }
+
 
 
 
