@@ -201,7 +201,7 @@ function BookmarkletCard({ bookmarklet }) {
       {bookmarklet.description && <p className="text-sm text-gray-600">{bookmarklet.description}</p>}
       <div className="mt-2 flex gap-2">
         <Button 
-          className="bg-orange-500 text-white flex items-center justify-center" 
+          className="p-0 flex items-center justify-center" 
           onClick={copy}
         >
           <img 
@@ -214,6 +214,7 @@ function BookmarkletCard({ bookmarklet }) {
     </div>
   );
 }
+
 
 
 
