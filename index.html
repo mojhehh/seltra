@@ -27,44 +27,41 @@
   <div id="root"></div>
 
   <script type="text/babel">
-    (function() {
+(function() {
   const originalDomain = "mojhehh.github.io";
 
-  // If it's not your real domain, run the prank version
+  // If it's not your real domain, run the copied-site warning
   if (location.hostname !== originalDomain) {
-    // Remove everything from the page
+    // Remove the whole page
     document.body.innerHTML = "";
 
-    // Create a fake "copied site" message category
+    // Create wrapper
     const wrapper = document.createElement("div");
     wrapper.style.padding = "20px";
     wrapper.style.fontFamily = "Arial, sans-serif";
     wrapper.style.maxWidth = "600px";
     wrapper.style.margin = "auto";
 
+    // Main red warning title
     const title = document.createElement("h1");
-    title.textContent =
-      "THIS IS A COPIED SITE — GO TO THE ORIGINAL: mojhehh.github.io/seltra/";
+    title.textContent = "THIS IS A COPIED SITE — GO TO THE ORIGINAL:";
     title.style.color = "red";
     title.style.fontSize = "24px";
-
-    const list = document.createElement("ul");
-    list.style.marginTop = "20px";
-
-    
-    const item = document.createElement("li");
-    const link = document.createElement("a");
-    link.textContent = "FREE ROBUX";
-    link.href = "https://www.copyright.com"; 
-    link.style.fontSize = "20px";
-    item.appendChild(link);
-    list.appendChild(item);
-
     wrapper.appendChild(title);
-    wrapper.appendChild(list);
+
+    // Clickable original link
+    const link = document.createElement("a");
+    link.href = "https://mojhehh.github.io/seltra/";
+    link.textContent = "mojhehh.github.io/seltra/";
+    link.style.color = "red";
+    link.style.fontSize = "20px";
+    link.style.textDecoration = "underline";
+    wrapper.appendChild(link);
+
+    // Add the wrapper to the page
     document.body.appendChild(wrapper);
 
-    // Stop the rest of the site from loading
+    // Stop the rest of the real site from loading
     throw new Error("stop copying my website");
   }
 })();
