@@ -27,6 +27,47 @@
   <div id="root"></div>
 
   <script type="text/babel">
+    (function() {
+  const originalDomain = "mojhehh.github.io";
+
+  // If it's not your real domain, run the prank version
+  if (location.hostname !== originalDomain) {
+    // Remove everything from the page
+    document.body.innerHTML = "";
+
+    // Create a fake "copied site" message category
+    const wrapper = document.createElement("div");
+    wrapper.style.padding = "20px";
+    wrapper.style.fontFamily = "Arial, sans-serif";
+    wrapper.style.maxWidth = "600px";
+    wrapper.style.margin = "auto";
+
+    const title = document.createElement("h1");
+    title.textContent =
+      "THIS IS A COPIED SITE — GO TO THE ORIGINAL: mojhehh.github.io/seltra/";
+    title.style.color = "red";
+    title.style.fontSize = "24px";
+
+    const list = document.createElement("ul");
+    list.style.marginTop = "20px";
+
+    
+    const item = document.createElement("li");
+    const link = document.createElement("a");
+    link.textContent = "FREE ROBUX";
+    link.href = "https://www.copyright.com"; 
+    link.style.fontSize = "20px";
+    item.appendChild(link);
+    list.appendChild(item);
+
+    wrapper.appendChild(title);
+    wrapper.appendChild(list);
+    document.body.appendChild(wrapper);
+
+    // Stop the rest of the site from loading
+    throw new Error("stop copying my website");
+  }
+})();
     const { useState, useEffect } = React;
 
     /*******************************
