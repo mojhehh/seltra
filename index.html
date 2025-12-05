@@ -30,26 +30,22 @@
 (function() {
   const originalDomain = "mojhehh.github.io";
 
-  // If it's not your real domain, run the copied-site warning
-  if (location.hostname !== originalDomain) {
-    // Remove the whole page
+  // Allow real domain *or* local file mode
+  if (location.hostname !== originalDomain && location.protocol !== "file:") {
     document.body.innerHTML = "";
 
-    // Create wrapper
     const wrapper = document.createElement("div");
     wrapper.style.padding = "20px";
     wrapper.style.fontFamily = "Arial, sans-serif";
     wrapper.style.maxWidth = "600px";
     wrapper.style.margin = "auto";
 
-    // Main red warning title
     const title = document.createElement("h1");
     title.textContent = "THIS IS A COPIED SITE — GO TO THE ORIGINAL:";
     title.style.color = "red";
     title.style.fontSize = "24px";
     wrapper.appendChild(title);
 
-    // Clickable original link
     const link = document.createElement("a");
     link.href = "https://mojhehh.github.io/seltra/";
     link.textContent = "mojhehh.github.io/seltra/";
@@ -58,13 +54,12 @@
     link.style.textDecoration = "underline";
     wrapper.appendChild(link);
 
-    // Add the wrapper to the page
     document.body.appendChild(wrapper);
 
-    // Stop the rest of the real site from loading
     throw new Error("stop copying my website");
   }
 })();
+
     const { useState, useEffect } = React;
 
     /*******************************
