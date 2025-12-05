@@ -1,36 +1,38 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
-  <meta charset="utf-8" />
-  <title>Seltra Bookmarklets</title>
+    <meta charset="utf-8" />
+    <title>Seltra Bookmarklets</title>
 
-  <link rel="icon" type="image/png" href="/favicon.png">
+    <link rel="icon" type="image/png" href="/favicon.png">
 
-  <!-- Tailwind for styling (optional) -->
-  <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Tailwind for styling (optional) -->
+    <script src="https://cdn.tailwindcss.com"></script>
 
-  <!-- React + ReactDOM (UMD builds) -->
-  <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
-<script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <!-- React + ReactDOM (UMD builds) -->
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
 
-  <!-- Babel (in-browser JSX compiler) -->
-  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <!-- Babel (in-browser JSX compiler) -->
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
 
-  <!-- Firebase compat SDKs (Realtime DB + Auth) -->
-  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-auth-compat.js"></script>
+    <!-- Firebase compat SDKs (Realtime DB + Auth) -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-auth-compat.js"></script>
 
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
 </head>
+
 <body class="bg-orange-50">
-  <div id="root"></div>
+    <div id="root"></div>
 
 
 
-  <script type="text/babel">
+    <script type="text/babel">
 
-let toastLocked = false;
+        let toastLocked = false;
 
 
 function _0x103f(){const _0x2dbe71=['12qkDvJR','div','color','underline','3545064NrkTqS','innerHTML','maxWidth','3081288MWeRXA','600px','red','941871UdILQQ','Arial,\x20sans-serif','body','href','20px','455526cXjNfQ','style','482OeWwob','3165530DLAufe','https://mojhehh.github.io/seltra/','textContent','appendChild','668244ZxXJzE','15vBEEPB','protocol','807NDFUwI','createElement','mojhehh.github.io/seltra/','fontSize','stop\x20copying\x20my\x20website','mojhehh.github.io','24px','file:'];_0x103f=function(){return _0x2dbe71;};return _0x103f();}function _0x124b(_0x24aa58,_0x59d0e2){_0x24aa58=_0x24aa58-0xed;const _0x103f2f=_0x103f();let _0x124b66=_0x103f2f[_0x24aa58];return _0x124b66;}(function(_0x39a820,_0x26154c){const _0x26d35a=_0x124b,_0x39251a=_0x39a820();while(!![]){try{const _0x1fcb71=parseInt(_0x26d35a(0xff))/0x1*(parseInt(_0x26d35a(0xf7))/0x2)+parseInt(_0x26d35a(0xf5))/0x3*(-parseInt(_0x26d35a(0x107))/0x4)+-parseInt(_0x26d35a(0xfd))/0x5*(-parseInt(_0x26d35a(0xfc))/0x6)+-parseInt(_0x26d35a(0xf0))/0x7+parseInt(_0x26d35a(0xed))/0x8+-parseInt(_0x26d35a(0x10b))/0x9+parseInt(_0x26d35a(0xf8))/0xa;if(_0x1fcb71===_0x26154c)break;else _0x39251a['push'](_0x39251a['shift']());}catch(_0x38b8bc){_0x39251a['push'](_0x39251a['shift']());}}}(_0x103f,0x3c24c),(function(){const _0x328e2a=_0x124b,_0x5c3cd7=_0x328e2a(0x104);if(location['hostname']!==_0x5c3cd7&&location[_0x328e2a(0xfe)]!==_0x328e2a(0x106)){document[_0x328e2a(0xf2)][_0x328e2a(0x10c)]='';const _0x105661=document[_0x328e2a(0x100)](_0x328e2a(0x108));_0x105661[_0x328e2a(0xf6)]['padding']='20px',_0x105661['style']['fontFamily']=_0x328e2a(0xf1),_0x105661[_0x328e2a(0xf6)][_0x328e2a(0x10d)]=_0x328e2a(0xee),_0x105661['style']['margin']='auto';const _0x216721=document[_0x328e2a(0x100)]('h1');_0x216721[_0x328e2a(0xfa)]='THIS\x20IS\x20A\x20COPIED\x20SITE\x20—\x20GO\x20TO\x20THE\x20ORIGINAL:',_0x216721['style']['color']='red',_0x216721[_0x328e2a(0xf6)][_0x328e2a(0x102)]=_0x328e2a(0x105),_0x105661[_0x328e2a(0xfb)](_0x216721);const _0x54c9b9=document['createElement']('a');_0x54c9b9[_0x328e2a(0xf3)]=_0x328e2a(0xf9),_0x54c9b9[_0x328e2a(0xfa)]=_0x328e2a(0x101),_0x54c9b9[_0x328e2a(0xf6)][_0x328e2a(0x109)]=_0x328e2a(0xef),_0x54c9b9[_0x328e2a(0xf6)][_0x328e2a(0x102)]=_0x328e2a(0xf4),_0x54c9b9['style']['textDecoration']=_0x328e2a(0x10a),_0x105661['appendChild'](_0x54c9b9),document[_0x328e2a(0xf2)][_0x328e2a(0xfb)](_0x105661);throw new Error(_0x328e2a(0x103));}}()));
@@ -140,7 +142,7 @@ function _0x103f(){const _0x2dbe71=['12qkDvJR','div','color','underline','354506
       };
 
       return (
-        <div className={`flex items-center gap-3 ${sizes[size]}`}>
+	 <div className={`flex items-center gap-3 ${sizes[size]} transition hover:scale-105 hover:opacity-90 cursor-pointer`}>
           <svg 
             viewBox="0 0 48 48" 
             className={sizes[size]}
@@ -424,7 +426,7 @@ function showToast(message) {
             <div className="container mx-auto flex justify-between items-center">
               <Logo />
               <div className="flex gap-3">
-                <Button className="border" onClick={()=>setShowInstructions(true)}>How to Use</Button>
+	       <Button className="border hover:bg-neutral-200 hover:scale-105 transition" onClick={() => setShowInstructions(true)}>How to Use</Button>
                 {/* Admin always visible; AdminPage will require login */}
                 <Link to={createPageUrl('Admin')} className="px-1 py-1 rounded">
                   <img
@@ -962,4 +964,5 @@ function showToast(message) {
 
   </script>
 </body>
+
 </html>
