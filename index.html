@@ -14,6 +14,89 @@
     <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
     <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
 
+    <style>
+        /* ✦ Glow image fade-in */
+        .fade-glow {
+            opacity: 0;
+            transition: opacity 0.8s ease-in-out 0.75s;
+        }
+
+        .fade-glow.show {
+            opacity: 1;
+        }
+
+
+        /* ✦ Universal fade-in for cards, categories, bookmarklets, etc */
+        .fade-item {
+            opacity: 0;
+            transform: translateY(10px);
+            transition: opacity 0.7s ease-in-out, transform 0.7s ease-in-out;
+        }
+
+        .fade-item.show {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+
+        /* ✦ Glow placements */
+        .glow-top-left {
+            position: fixed;
+            top: 20px;
+            left: -50px;
+            width: 300px;
+            pointer-events: none;
+            z-index: -1;
+        }
+
+        .glow-top-right {
+            position: fixed;
+            top: 20px;
+            right: -50px;
+            width: 300px;
+            pointer-events: none;
+            transform: scaleX(-1);
+            z-index: -1;
+        }
+
+        .glow-bottom-left {
+            position: fixed;
+            bottom: 0px;
+            left: -50px;
+            width: 300px;
+            pointer-events: none;
+            transform: scaleX(-1);
+            z-index: -1;
+        }
+
+        .glow-bottom-right {
+            position: fixed;
+            bottom: 0px;
+            right: -50px;
+            width: 300px;
+            pointer-events: none;
+            z-index: -1;
+        }
+    </style>
+
+
+    <script>
+        window.addEventListener("DOMContentLoaded", () => {
+            document.body.classList.add("fade-all");
+
+            setTimeout(() => {
+                document.body.classList.add("show");
+                document.querySelectorAll(".fade-item").forEach(el =>
+                    el.classList.add("show")
+                );
+                document.querySelectorAll(".fade-glow").forEach(el =>
+                    el.classList.add("show")
+                );
+            }, 100);
+        });
+    </script>
+
+
     <!-- Babel (in-browser JSX compiler) -->
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
 
@@ -28,7 +111,17 @@
 <body class="bg-orange-50">
     <div id="root"></div>
 
+    <!-- TOP LEFT -->
+    <img src="https://raw.githubusercontent.com/mojhehh/seltra/2ad6291b8d372b60fed9482159267066e7dd7bc0/kcM9b4ncj.png" class="glow-top-left fade-glow" />
 
+    <!-- TOP RIGHT -->
+    <img src="https://raw.githubusercontent.com/mojhehh/seltra/2ad6291b8d372b60fed9482159267066e7dd7bc0/kcM9b4ncj.png" class="glow-top-right fade-glow" />
+
+    <!-- BOTTOM LEFT -->
+    <img src="https://raw.githubusercontent.com/mojhehh/seltra/2ad6291b8d372b60fed9482159267066e7dd7bc0/kcM9b4ncj.png" class="glow-bottom-left fade-glow" />
+
+    <!-- BOTTOM RIGHT -->
+    <img src="https://raw.githubusercontent.com/mojhehh/seltra/2ad6291b8d372b60fed9482159267066e7dd7bc0/kcM9b4ncj.png" class="glow-bottom-right fade-glow" />
 
     <script type="text/babel">
 
@@ -869,6 +962,9 @@ function showToast(message) {
                 </CardContent>
               </Card>
             </section>
+
+
+
 
             {/* Bookmarklets */}
             <section>
