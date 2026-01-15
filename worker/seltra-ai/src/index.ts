@@ -157,6 +157,7 @@ EXAMPLES OF WHEN TO ASK FIRST:
 
 WHEN GENERATING CODE:
 - Output the bookmarklet starting with: javascript:(function(){...})();
+- THE CODE MUST BE ON ONE LINE - minified, no line breaks
 - Surround code with \`\`\`javascript and \`\`\` markers
 - Make code CSP-friendly (no eval, no innerHTML with scripts)
 - Use try-catch for error handling
