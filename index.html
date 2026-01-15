@@ -804,6 +804,32 @@
       const [email, setEmail] = useState('');
       const [submitting, setSubmitting] = useState(false);
       const [submitted, setSubmitted] = useState(false);
+      const [viewMode, setViewMode] = useState('menu'); // 'menu', 'new', 'requests'
+      const [myRequests, setMyRequests] = useState([]);
+      const [loadingRequests, setLoadingRequests] = useState(false);
+
+      const userId = getOrCreateUserId();
+
+      const loadMyRequests = async () => {
+        setLoadingRequests(true);
+        try {
+          const allFeedback = await firebaseDB.get('feedback');
+          if (allFeedback) {
+            const myFeedback = Object.keys(allFeedback)
+              .map(k => ({ id: k, ...allFeedback[k] }))
+              .filter(f => f.userId === userId)
+              .sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
+            setMyRequests(myFeedback);
+          } else {
+            setMyRequests([]);
+          }
+        } catch (e) {
+          console.error('Failed to load requests:', e);
+          setMyRequests([]);
+        } finally {
+          setLoadingRequests(false);
+        }
+      };
 
       useEffect(() => {
         if (!open) {
@@ -812,6 +838,7 @@
           setDescription('');
           setEmail('');
           setSubmitted(false);
+          setViewMode('menu');
         }
         if (!open) return;
         const handleEsc = (e) => { if (e.key === 'Escape') onClose(); };
@@ -833,7 +860,8 @@
             email: email.trim() || null,
             status: 'new',
             createdAt: Date.now(),
-            userAgent: navigator.userAgent
+            userAgent: navigator.userAgent,
+            userId: userId
           });
           setSubmitted(true);
           showToast('Feedback submitted successfully!');
@@ -842,6 +870,35 @@
           showToast('Failed to submit. Please try again.');
         } finally {
           setSubmitting(false);
+        }
+      };
+
+      const getStatusColor = (status) => {
+        switch (status) {
+          case 'new': return 'bg-blue-100 text-blue-700';
+          case 'in-progress': return 'bg-yellow-100 text-yellow-700';
+          case 'completed': return 'bg-green-100 text-green-700';
+          case 'rejected': return 'bg-red-100 text-red-700';
+          default: return 'bg-gray-100 text-gray-700';
+        }
+      };
+
+      const getStatusLabel = (status) => {
+        switch (status) {
+          case 'new': return 'Pending Review';
+          case 'in-progress': return 'In Progress';
+          case 'completed': return 'Completed';
+          case 'rejected': return 'Rejected';
+          default: return status || 'Unknown';
+        }
+      };
+
+      const getTypeIcon = (type) => {
+        switch (type) {
+          case 'bug': return '🐛';
+          case 'bookmarklet': return '✨';
+          case 'feature': return '💡';
+          default: return '💬';
         }
       };
 
@@ -871,9 +928,82 @@
                 </div>
                 <h3 className="text-2xl font-bold text-gray-900 mb-2">Thank You!</h3>
                 <p className="text-gray-500 mb-6">Your feedback has been submitted successfully. We'll review it shortly.</p>
-                <Button onClick={onClose} className="bg-gradient-to-r from-orange-500 to-orange-600 text-white px-8">Close</Button>
+                <div className="flex gap-3 justify-center">
+                  <Button onClick={() => { setViewMode('requests'); setSubmitted(false); loadMyRequests(); }} className="border border-gray-200 hover:bg-gray-50 text-gray-700 px-6">View My Requests</Button>
+                  <Button onClick={onClose} className="bg-gradient-to-r from-orange-500 to-orange-600 text-white px-8">Close</Button>
+                </div>
               </div>
-            ) : !feedbackType ? (
+            ) : viewMode === 'requests' ? (
+              <>
+                <div className="flex items-center gap-3 mb-6">
+                  <button onClick={() => setViewMode('menu')} className="w-10 h-10 flex items-center justify-center rounded-xl hover:bg-gray-100 transition text-gray-400 hover:text-gray-600">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M15 18l-6-6 6-6"/></svg>
+                  </button>
+                  <div>
+                    <h2 className="text-xl font-bold text-gray-900">My Requests</h2>
+                    <p className="text-sm text-gray-500">Track the status of your submissions</p>
+                  </div>
+                </div>
+                {loadingRequests ? (
+                  <div className="flex justify-center py-12">
+                    <div className="animate-spin h-8 w-8 border-b-2 rounded-full border-orange-600"></div>
+                  </div>
+                ) : myRequests.length === 0 ? (
+                  <div className="text-center py-12">
+                    <div className="w-16 h-16 bg-gray-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                      <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" strokeWidth="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+                    </div>
+                    <p className="text-gray-500 mb-4">You haven't submitted any requests yet</p>
+                    <Button onClick={() => setViewMode('menu')} className="bg-gradient-to-r from-orange-500 to-orange-600 text-white">Submit a Request</Button>
+                  </div>
+                ) : (
+                  <div className="space-y-3 max-h-96 overflow-y-auto">
+                    {myRequests.map(req => (
+                      <div key={req.id} className="border border-gray-200 rounded-xl p-4 hover:border-orange-200 transition">
+                        <div className="flex items-start gap-3">
+                          <div className="text-2xl">{getTypeIcon(req.type)}</div>
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-2 mb-1">
+                              <h4 className="font-semibold text-gray-900 truncate">{req.title}</h4>
+                              <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${getStatusColor(req.status)}`}>
+                                {getStatusLabel(req.status)}
+                              </span>
+                            </div>
+                            <p className="text-sm text-gray-500 line-clamp-2">{req.description}</p>
+                            <p className="text-xs text-gray-400 mt-2">{new Date(req.createdAt).toLocaleDateString()}</p>
+                            {req.status === 'rejected' && req.rejectionReason && (
+                              <div className="mt-3 pt-3 border-t border-gray-100">
+                                <div className="flex items-center gap-2 mb-1">
+                                  <div className="w-5 h-5 bg-red-100 rounded-full flex items-center justify-center">
+                                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#dc2626" strokeWidth="2"><path d="M18 6L6 18M6 6l12 12"/></svg>
+                                  </div>
+                                  <span className="text-xs font-medium text-red-600">Rejection Reason</span>
+                                </div>
+                                <p className="text-sm text-gray-700 bg-red-50 rounded-lg p-3">{req.rejectionReason}</p>
+                              </div>
+                            )}
+                            {req.adminResponse && (
+                              <div className="mt-3 pt-3 border-t border-gray-100">
+                                <div className="flex items-center gap-2 mb-1">
+                                  <div className="w-5 h-5 bg-orange-100 rounded-full flex items-center justify-center">
+                                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#ea580c" strokeWidth="2"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+                                  </div>
+                                  <span className="text-xs font-medium text-orange-600">Response from Seltra Team</span>
+                                </div>
+                                <p className="text-sm text-gray-700 bg-orange-50 rounded-lg p-3">{req.adminResponse}</p>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+                <div className="flex justify-end mt-6 pt-5 border-t border-gray-100">
+                  <Button className="border border-gray-200 hover:bg-gray-50 text-gray-700 px-6" onClick={onClose}>Close</Button>
+                </div>
+              </>
+            ) : viewMode === 'menu' && !feedbackType ? (
               <>
                 <div className="flex items-center gap-4 mb-6">
                   <div className="w-14 h-14 bg-gradient-to-br from-orange-400 to-orange-600 rounded-2xl flex items-center justify-center shadow-lg">
@@ -886,7 +1016,7 @@
                 </div>
                 <div className="space-y-3">
                   {feedbackTypes.map(type => (
-                    <button key={type.id} onClick={() => setFeedbackType(type.id)} className={`w-full flex items-center gap-4 p-4 border-2 border-gray-100 rounded-2xl ${colorClasses[type.color].hover} transition-all duration-200 group text-left btn-pop`}>
+                    <button key={type.id} onClick={() => { setFeedbackType(type.id); setViewMode('new'); }} className={`w-full flex items-center gap-4 p-4 border-2 border-gray-100 rounded-2xl ${colorClasses[type.color].hover} transition-all duration-200 group text-left btn-pop`}>
                       <div className={`w-14 h-14 ${colorClasses[type.color].bg} rounded-xl flex items-center justify-center text-2xl`}>{type.icon}</div>
                       <div className="flex-1">
                         <div className="font-semibold text-gray-900 text-lg">{type.label}</div>
@@ -896,6 +1026,16 @@
                     </button>
                   ))}
                 </div>
+                <button onClick={() => { setViewMode('requests'); loadMyRequests(); }} className="w-full flex items-center gap-4 p-4 mt-4 border-2 border-orange-100 rounded-2xl hover:bg-orange-50 hover:border-orange-300 transition-all duration-200 group text-left btn-pop">
+                  <div className="w-14 h-14 bg-orange-100 rounded-xl flex items-center justify-center">
+                    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#ea580c" strokeWidth="2"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/></svg>
+                  </div>
+                  <div className="flex-1">
+                    <div className="font-semibold text-gray-900 text-lg">My Requests</div>
+                    <div className="text-sm text-gray-500">Track your submitted feedback</div>
+                  </div>
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-gray-300 group-hover:text-orange-500 transition"><path d="M9 18l6-6-6-6"/></svg>
+                </button>
                 <div className="flex justify-between items-center mt-8 pt-5 border-t border-gray-100">
                   <div className="flex gap-4 text-xs text-gray-400">
                     <a href="#/terms" className="hover:text-orange-600 transition" onClick={onClose}>Terms</a>
@@ -904,10 +1044,10 @@
                   <Button className="border border-gray-200 hover:bg-gray-50 text-gray-700 px-6" onClick={onClose}>Close</Button>
                 </div>
               </>
-            ) : (
+            ) : viewMode === 'new' && feedbackType ? (
               <>
                 <div className="flex items-center gap-3 mb-6">
-                  <button onClick={() => setFeedbackType(null)} className="w-10 h-10 flex items-center justify-center rounded-xl hover:bg-gray-100 transition text-gray-400 hover:text-gray-600">
+                  <button onClick={() => { setFeedbackType(null); setViewMode('menu'); }} className="w-10 h-10 flex items-center justify-center rounded-xl hover:bg-gray-100 transition text-gray-400 hover:text-gray-600">
                     <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M15 18l-6-6 6-6"/></svg>
                   </button>
                   <div>
@@ -934,7 +1074,7 @@
                   </Button>
                 </div>
               </>
-            )}
+            ) : null}
           </div>
         </div>
       );
@@ -1448,14 +1588,42 @@
         }
       }
 
-      async function updateFeedbackStatus(id, status) {
+      async function updateFeedbackStatus(id, status, rejectionReason = null) {
         try {
-          await firebaseDB.update(`feedback/${id}`, { status });
+          const updateData = { status };
+          if (status === 'rejected' && rejectionReason) {
+            updateData.rejectionReason = rejectionReason;
+          } else if (status !== 'rejected') {
+            updateData.rejectionReason = null;
+          }
+          await firebaseDB.update(`feedback/${id}`, updateData);
           await loadData();
           showToast('Status updated');
         } catch (e) {
           console.error(e);
           showToast('Failed to update status');
+        }
+      }
+
+      async function updateRejectionReason(id, reason) {
+        try {
+          await firebaseDB.update(`feedback/${id}`, { rejectionReason: reason });
+          await loadData();
+          showToast('Rejection reason saved');
+        } catch (e) {
+          console.error(e);
+          showToast('Failed to save rejection reason');
+        }
+      }
+
+      async function updateFeedbackResponse(id, response) {
+        try {
+          await firebaseDB.update(`feedback/${id}`, { adminResponse: response, respondedAt: Date.now() });
+          await loadData();
+          showToast('Response saved');
+        } catch (e) {
+          console.error(e);
+          showToast('Failed to save response');
         }
       }
 
@@ -1647,6 +1815,35 @@
                                   {f.email && <span className="mr-4">📧 {f.email}</span>}
                                   <span>{new Date(f.createdAt).toLocaleString()}</span>
                                 </div>
+                                <div className="mt-3 pt-3 border-t border-gray-200">
+                                  <label className="text-xs font-medium text-gray-600 block mb-1">Admin Response:</label>
+                                  <textarea 
+                                    className="w-full text-sm border rounded px-2 py-1 min-h-[60px]"
+                                    placeholder="Write a response to the user..."
+                                    defaultValue={f.adminResponse || ''}
+                                    onBlur={(e) => {
+                                      if (e.target.value !== (f.adminResponse || '')) {
+                                        updateFeedbackResponse(f.id, e.target.value);
+                                      }
+                                    }}
+                                  />
+                                  {f.respondedAt && <span className="text-xs text-gray-400">Last updated: {new Date(f.respondedAt).toLocaleString()}</span>}
+                                </div>
+                                {f.status === 'rejected' && (
+                                  <div className="mt-3 pt-3 border-t border-gray-200">
+                                    <label className="text-xs font-medium text-red-600 block mb-1">Rejection Reason:</label>
+                                    <textarea 
+                                      className="w-full text-sm border border-red-200 rounded px-2 py-1 min-h-[50px] bg-red-50"
+                                      placeholder="Explain why this request was rejected..."
+                                      defaultValue={f.rejectionReason || ''}
+                                      onBlur={(e) => {
+                                        if (e.target.value !== (f.rejectionReason || '')) {
+                                          updateRejectionReason(f.id, e.target.value);
+                                        }
+                                      }}
+                                    />
+                                  </div>
+                                )}
                               </div>
                               <div className="flex flex-col gap-2">
                                 <select 
@@ -1656,7 +1853,7 @@
                                 >
                                   <option value="new">New</option>
                                   <option value="in-progress">In Progress</option>
-                                  <option value="done">Done</option>
+                                  <option value="completed">Completed</option>
                                   <option value="rejected">Rejected</option>
                                 </select>
                                 <Button className="border text-xs px-2 py-1" onClick={() => deleteFeedback(f.id)}>Delete</Button>
