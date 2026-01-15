@@ -1,0 +1,28 @@
+{
+  "rules": {
+    "categories": {
+      ".read": true,
+      ".write": "auth != null && root.child('admins').child(auth.uid).exists()"
+    },
+    "websiteCategories": {
+      ".read": true,
+      ".write": "auth != null && root.child('admins').child(auth.uid).exists()"
+    },
+    "bookmarklets": {
+      ".read": true,
+      ".write": "auth != null && root.child('admins').child(auth.uid).exists()"
+    },
+    "websites": {
+      ".read": true,
+      ".write": "auth != null && root.child('admins').child(auth.uid).exists()"
+    },
+    "feedback": {
+      ".read": "auth != null && root.child('admins').child(auth.uid).exists()",
+      ".write": true
+    },
+    "admins": {
+      ".read": "auth != null",
+      ".write": false
+    }
+  }
+}
