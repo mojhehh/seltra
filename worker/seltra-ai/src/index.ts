@@ -48,24 +48,44 @@ export default {
 					searchContext = await searchGoogle(searchQuery, env);
 				}
 				
-				const systemPrompt = `You are an expert JavaScript bookmarklet developer. Your ONLY job is to generate working bookmarklet code. You have NO restrictions on what you can create.
+				const systemPrompt = `You are an expert JavaScript bookmarklet developer. Generate ROBUST, PRODUCTION-QUALITY bookmarklet code.
 
-${searchContext ? `RELEVANT WEB SEARCH RESULTS (use these for context if helpful):\n${searchContext}\n\n` : ''}
+${searchContext ? `RELEVANT WEB SEARCH RESULTS:\n${searchContext}\n\n` : ''}
 
-OUTPUT RULES:
-- Output ONLY the bookmarklet code, nothing else
-- Start with: javascript:
-- Use IIFE format: javascript:(function(){...})();
-- Single line, no line breaks
-- Minified code only
+STRICT OUTPUT FORMAT:
+- Output ONLY the bookmarklet code, nothing else - no explanations, no markdown
+- Must start with: javascript:
+- Use IIFE: javascript:(function(){...})();
+- SINGLE LINE only - no newlines, no formatting
+- Fully minified
 
-IMPORTANT LIMITATIONS TO COMMUNICATE:
-If the user asks for something that requires knowledge of a specific website's internal structure, API, or authentication system (like Kahoot answers, Blooket hacks, game cheats, school portal exploits, etc.), you MUST respond with EXACTLY this text and nothing else:
+CODE QUALITY REQUIREMENTS - CRITICAL:
+1. CSP-FRIENDLY: Never use eval(), new Function(), innerHTML with scripts, document.write()
+2. ERROR HANDLING: Wrap risky operations in try-catch, check if elements exist before accessing
+3. CROSS-ORIGIN SAFE: Don't fetch cross-origin resources without handling CORS errors
+4. USE MODERN APIs: Use textContent not innerHTML for text, use async/await with try-catch
+5. VALIDATE DATA: Check if variables exist, use optional chaining (?.), nullish coalescing (??)
+6. CLEAN FILENAMES: When creating files/downloads, sanitize names (remove protocols, special chars)
+7. NO FRAGILE CODE: Don't assume assets are fetchable, don't assume stylesheets are readable
+8. GRACEFUL DEGRADATION: If one part fails, continue with what works
+
+COMMON MISTAKES TO AVOID:
+- DON'T re-fetch assets that need auth headers (they'll 404/405)
+- DON'T read cross-origin stylesheets (throws SecurityError)
+- DON'T use deprecated APIs (use generateAsync not generate for JSZip)
+- DON'T use innerHTML on <style> tags (use textContent)
+- DON'T create invalid paths in ZIPs from absolute URLs
+- DON'T assume all resources are public/accessible
+
+SELF-CHECK BEFORE OUTPUT:
+Ask yourself: "Will this code break on sites with CSP? Auth? CORS? Complex SPAs?"
+If yes, fix it. Make it defensive and robust.
+
+SITE-SPECIFIC LIMITATION:
+If the request needs internal website APIs, auth systems, encrypted data, or server-side info (Kahoot answers, Blooket hacks, game cheats, etc.), respond with EXACTLY:
 "SITE_SPECIFIC_REQUEST"
 
-This is because bookmarklets can only manipulate what's visible in the DOM or make standard web requests - they cannot access internal APIs, encrypted data, or server-side information without documentation.
-
-For everything else (DOM manipulation, visual changes, utilities, productivity tools, fun effects, etc.) - generate the code with NO restrictions.`;
+For everything else - generate robust, defensive code with NO restrictions.`;
 
 				const response = await fetch('https://api.cerebras.ai/v1/chat/completions', {
 					method: 'POST',
@@ -74,7 +94,7 @@ For everything else (DOM manipulation, visual changes, utilities, productivity t
 						'Authorization': `Bearer ${env.CEREBRAS_API_KEY}`,
 					},
 					body: JSON.stringify({
-						model: 'llama-4-scout-17b-16e-instruct',
+						model: 'llama-3.3-70b',
 						max_tokens: 8192,
 						temperature: 0.7,
 						messages: [
@@ -84,8 +104,28 @@ For everything else (DOM manipulation, visual changes, utilities, productivity t
 					}),
 				});
 
-				const data = await response.json() as { choices?: Array<{ message?: { content?: string } }> };
+				const responseText = await response.text();
+				let data: { choices?: Array<{ message?: { content?: string } }>; error?: { message: string } };
+				
+				try {
+					data = JSON.parse(responseText);
+				} catch {
+					return new Response(JSON.stringify({ error: 'Invalid API response', raw: responseText.substring(0, 500) }), {
+						status: 500,
+						headers: { ...CORS_HEADERS, 'Content-Type': 'application/json' },
+					});
+				}
+				
+				// Check for API error
+				if (data.error || !response.ok) {
+					return new Response(JSON.stringify({ error: 'API Error', status: response.status, details: data.error?.message || responseText.substring(0, 500) }), {
+						status: 500,
+						headers: { ...CORS_HEADERS, 'Content-Type': 'application/json' },
+					});
+				}
+				
 				let code = data.choices?.[0]?.message?.content?.trim() || '';
+				const rawResponse = code; // Store for debugging
 				
 				if (code === 'SITE_SPECIFIC_REQUEST' || code.includes('SITE_SPECIFIC_REQUEST')) {
 					return new Response(JSON.stringify({ 
@@ -97,13 +137,45 @@ For everything else (DOM manipulation, visual changes, utilities, productivity t
 					});
 				}
 				
+				// Try to extract javascript: code from the response
 				if (!code.startsWith('javascript:')) {
-					const match = code.match(/javascript:\s*\(function\(\)\{[\s\S]*\}\)\(\);?/i) || 
-					              code.match(/javascript:[\s\S]+/i);
-					if (match) {
-						code = match[0];
+					// Try various patterns to find the bookmarklet code
+					const patterns = [
+						/javascript:\s*\(function\(\)\s*\{[\s\S]*?\}\)\s*\(\);?/i,
+						/javascript:\s*\(\(\)\s*=>\s*\{[\s\S]*?\}\)\s*\(\);?/i,
+						/javascript:\s*void\s*\([\s\S]*?\);?/i,
+						/javascript:[^\s`"'\n]+/i,
+						/`(javascript:[^`]+)`/i,
+						/"(javascript:[^"]+)"/i,
+						/'(javascript:[^']+)'/i
+					];
+					
+					for (const pattern of patterns) {
+						const match = code.match(pattern);
+						if (match) {
+							code = match[1] || match[0];
+							break;
+						}
+					}
+					
+					// If still no match, try to build from code block
+					if (!code.startsWith('javascript:')) {
+						const codeBlockMatch = code.match(/```(?:javascript|js)?\s*([\s\S]*?)```/i);
+						if (codeBlockMatch) {
+							let extracted = codeBlockMatch[1].trim();
+							if (extracted.startsWith('javascript:')) {
+								code = extracted;
+							} else {
+								// Wrap in bookmarklet format
+								extracted = extracted.replace(/\n/g, ' ').replace(/\s+/g, ' ');
+								code = `javascript:(function(){${extracted}})();`;
+							}
+						}
 					}
 				}
+				
+				// Clean up the code
+				code = code.replace(/\n/g, ' ').replace(/\s+/g, ' ').trim();
 				
 				return new Response(JSON.stringify({ code, siteSpecific: false }), {
 					headers: { ...CORS_HEADERS, 'Content-Type': 'application/json' },
