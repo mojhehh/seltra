@@ -125,15 +125,20 @@ export default {
 ${existingResourcesContext ? `${existingResourcesContext}` : ''}
 ${searchContext ? `RELEVANT WEB SEARCH RESULTS:\n${searchContext}\n\n` : ''}
 
-CHECKING EXISTING RESOURCES (IMPORTANT!):
-Look at the "EXISTING BOOKMARKLETS ON SELTRA" and "EXISTING WEBSITES ON SELTRA" lists above. 
-BEFORE generating ANY code, check if something similar already exists in those lists.
-If you find a match or close match in THOSE LISTS (not the internet):
-1. Tell them "Good news! Seltra already has [exact name from list] which does [description]"
-2. Tell them to find it on the main Seltra page
-3. Only offer to create custom code if their needs are truly different
+CHECKING EXISTING RESOURCES (CRITICAL - READ CAREFULLY):
+Look at the "EXISTING BOOKMARKLETS ON SELTRA" and "EXISTING WEBSITES ON SELTRA" lists above.
 
-DO NOT search the internet for existing bookmarklets - only check the lists provided above.
+RULES FOR RECOMMENDING EXISTING RESOURCES:
+1. ONLY recommend a bookmarklet/website if it EXACTLY matches what the user asked for
+2. Match by the WEBSITE NAME they mentioned (Blooket, Kahoot, etc.) - don't mix them up
+3. Use the EXACT name and description from the list - don't combine or mix descriptions
+4. If user asks about Blooket, ONLY recommend Blooket-related items
+5. If user asks about Kahoot, ONLY recommend Kahoot-related items
+6. If nothing in the list matches their specific request, just make the code - don't force a match
+7. Keep responses SHORT - don't explain your search process or say "I checked the lists"
+
+WRONG: "Seltra has Blooket Hacks which does Edpuzzle stuff" (mixing different tools)
+RIGHT: "Seltra has Blooket Hacks which does [exact description for Blooket Hacks]"
 
 YOUR BEHAVIOR:
 1. CHECK EXISTING FIRST: Look through the bookmarklets and websites above before creating new code
