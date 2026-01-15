@@ -807,8 +807,45 @@
       const [viewMode, setViewMode] = useState('menu'); // 'menu', 'new', 'requests'
       const [myRequests, setMyRequests] = useState([]);
       const [loadingRequests, setLoadingRequests] = useState(false);
+      const [unreadCount, setUnreadCount] = useState(0);
 
       const userId = getOrCreateUserId();
+
+      const getLastViewedTime = () => {
+        try {
+          return parseInt(localStorage.getItem('seltra_requests_viewed') || '0');
+        } catch { return 0; }
+      };
+
+      const markAsViewed = () => {
+        try {
+          localStorage.setItem('seltra_requests_viewed', Date.now().toString());
+          setUnreadCount(0);
+        } catch {}
+      };
+
+      const checkUnreadUpdates = async () => {
+        try {
+          const allFeedback = await firebaseDB.get('feedback');
+          if (allFeedback) {
+            const lastViewed = getLastViewedTime();
+            const myFeedback = Object.keys(allFeedback)
+              .map(k => ({ id: k, ...allFeedback[k] }))
+              .filter(f => f.userId === userId);
+            
+            // Count requests with admin updates after last viewed
+            const unread = myFeedback.filter(f => {
+              const hasAdminUpdate = (f.respondedAt && f.respondedAt > lastViewed) ||
+                                    (f.statusChangedAt && f.statusChangedAt > lastViewed) ||
+                                    (f.status !== 'new' && f.createdAt > lastViewed);
+              return hasAdminUpdate;
+            }).length;
+            setUnreadCount(unread);
+          }
+        } catch (e) {
+          console.error('Failed to check updates:', e);
+        }
+      };
 
       const loadMyRequests = async () => {
         setLoadingRequests(true);
@@ -839,6 +876,8 @@
           setEmail('');
           setSubmitted(false);
           setViewMode('menu');
+        } else {
+          checkUnreadUpdates();
         }
         if (!open) return;
         const handleEsc = (e) => { if (e.key === 'Escape') onClose(); };
@@ -929,7 +968,7 @@
                 <h3 className="text-2xl font-bold text-gray-900 mb-2">Thank You!</h3>
                 <p className="text-gray-500 mb-6">Your feedback has been submitted successfully. We'll review it shortly.</p>
                 <div className="flex gap-3 justify-center">
-                  <Button onClick={() => { setViewMode('requests'); setSubmitted(false); loadMyRequests(); }} className="border border-gray-200 hover:bg-gray-50 text-gray-700 px-6">View My Requests</Button>
+                  <Button onClick={() => { setViewMode('requests'); setSubmitted(false); loadMyRequests(); markAsViewed(); }} className="border border-gray-200 hover:bg-gray-50 text-gray-700 px-6">View My Requests</Button>
                   <Button onClick={onClose} className="bg-gradient-to-r from-orange-500 to-orange-600 text-white px-8">Close</Button>
                 </div>
               </div>
@@ -1026,13 +1065,18 @@
                     </button>
                   ))}
                 </div>
-                <button onClick={() => { setViewMode('requests'); loadMyRequests(); }} className="w-full flex items-center gap-4 p-4 mt-4 border-2 border-orange-100 rounded-2xl hover:bg-orange-50 hover:border-orange-300 transition-all duration-200 group text-left btn-pop">
+                <button onClick={() => { setViewMode('requests'); loadMyRequests(); markAsViewed(); }} className="w-full flex items-center gap-4 p-4 mt-4 border-2 border-orange-100 rounded-2xl hover:bg-orange-50 hover:border-orange-300 transition-all duration-200 group text-left btn-pop relative">
                   <div className="w-14 h-14 bg-orange-100 rounded-xl flex items-center justify-center">
                     <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#ea580c" strokeWidth="2"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/></svg>
                   </div>
                   <div className="flex-1">
-                    <div className="font-semibold text-gray-900 text-lg">My Requests</div>
-                    <div className="text-sm text-gray-500">Track your submitted feedback</div>
+                    <div className="font-semibold text-gray-900 text-lg flex items-center gap-2">
+                      My Requests
+                      {unreadCount > 0 && (
+                        <span className="bg-red-500 text-white text-xs font-bold px-2 py-0.5 rounded-full animate-pulse">{unreadCount}</span>
+                      )}
+                    </div>
+                    <div className="text-sm text-gray-500">{unreadCount > 0 ? `${unreadCount} new update${unreadCount > 1 ? 's' : ''}` : 'Track your submitted feedback'}</div>
                   </div>
                   <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-gray-300 group-hover:text-orange-500 transition"><path d="M9 18l6-6-6-6"/></svg>
                 </button>
@@ -1590,7 +1634,7 @@
 
       async function updateFeedbackStatus(id, status, rejectionReason = null) {
         try {
-          const updateData = { status };
+          const updateData = { status, statusChangedAt: Date.now() };
           if (status === 'rejected' && rejectionReason) {
             updateData.rejectionReason = rejectionReason;
           } else if (status !== 'rejected') {
