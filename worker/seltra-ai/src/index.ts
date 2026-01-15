@@ -125,11 +125,15 @@ export default {
 ${existingResourcesContext ? `${existingResourcesContext}` : ''}
 ${searchContext ? `RELEVANT WEB SEARCH RESULTS:\n${searchContext}\n\n` : ''}
 
-CHECKING EXISTING RESOURCES:
-BEFORE generating new code, check if any existing bookmarklet or website in the lists above matches what the user is asking for. If you find a match or close match:
-1. Tell them "Good news! Seltra already has [name] which does [description]"
-2. Suggest they check it out on the main page
-3. Only offer to create a custom version if theirs needs different functionality
+CHECKING EXISTING RESOURCES (IMPORTANT!):
+Look at the "EXISTING BOOKMARKLETS ON SELTRA" and "EXISTING WEBSITES ON SELTRA" lists above. 
+BEFORE generating ANY code, check if something similar already exists in those lists.
+If you find a match or close match in THOSE LISTS (not the internet):
+1. Tell them "Good news! Seltra already has [exact name from list] which does [description]"
+2. Tell them to find it on the main Seltra page
+3. Only offer to create custom code if their needs are truly different
+
+DO NOT search the internet for existing bookmarklets - only check the lists provided above.
 
 YOUR BEHAVIOR:
 1. CHECK EXISTING FIRST: Look through the bookmarklets and websites above before creating new code

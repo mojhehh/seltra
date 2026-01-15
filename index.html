@@ -730,10 +730,13 @@
                   </div>
                 ) : (
                   <>
-                    {messages.map((msg, i) => (
+                    {messages.map((msg, i) => {
+                      // Strip code blocks from message if code was extracted separately
+                      const displayContent = msg.code ? msg.content.replace(/```(?:javascript|js)?\s*[\s\S]*?```/gi, '').trim() : msg.content;
+                      return (
                       <div key={i} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
                         <div className={`max-w-[80%] ${msg.role === 'user' ? 'bg-gradient-to-r from-orange-500 to-orange-600 text-white' : 'bg-gray-100 text-gray-800'} rounded-2xl px-4 py-3`}>
-                          <div className="text-sm whitespace-pre-wrap">{msg.content}</div>
+                          <div className="text-sm whitespace-pre-wrap">{displayContent}</div>
                           {msg.code && (
                             <div className="mt-3 relative">
                               <pre className="bg-gray-900 text-green-400 p-3 rounded-xl text-xs overflow-x-auto whitespace-pre-wrap break-all max-h-40 overflow-y-auto font-mono">{msg.code}</pre>
@@ -748,7 +751,7 @@
                           )}
                         </div>
                       </div>
-                    ))}
+                    )})}
                     {loading && (
                       <div className="flex justify-start">
                         <div className="bg-gray-100 rounded-2xl px-4 py-3">
