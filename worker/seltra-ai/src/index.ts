@@ -4,6 +4,11 @@ export interface Env {
 	GOOGLE_CX: string;
 }
 
+interface ChatMessage {
+	role: 'user' | 'assistant';
+	content: string;
+}
+
 const CORS_HEADERS = {
 	'Access-Control-Allow-Origin': '*',
 	'Access-Control-Allow-Methods': 'POST, OPTIONS',
@@ -28,6 +33,31 @@ async function searchGoogle(query: string, env: Env): Promise<string> {
 	}
 }
 
+async function generateChatTitle(messages: ChatMessage[], env: Env): Promise<string> {
+	try {
+		const response = await fetch('https://api.cerebras.ai/v1/chat/completions', {
+			method: 'POST',
+			headers: {
+				'Content-Type': 'application/json',
+				'Authorization': `Bearer ${env.CEREBRAS_API_KEY}`,
+			},
+			body: JSON.stringify({
+				model: 'llama-3.3-70b',
+				max_tokens: 50,
+				temperature: 0.3,
+				messages: [
+					{ role: 'system', content: 'Generate a very short title (3-5 words max) for this bookmarklet conversation. Output ONLY the title, nothing else.' },
+					{ role: 'user', content: messages.map(m => `${m.role}: ${m.content}`).slice(0, 4).join('\n') }
+				]
+			}),
+		});
+		const data = await response.json() as { choices?: Array<{ message?: { content?: string } }> };
+		return data.choices?.[0]?.message?.content?.trim().replace(/['"]/g, '') || 'New Chat';
+	} catch {
+		return 'New Chat';
+	}
+}
+
 export default {
 	async fetch(request: Request, env: Env): Promise<Response> {
 		if (request.method === 'OPTIONS') {
@@ -36,6 +66,132 @@ export default {
 
 		const url = new URL(request.url);
 		
+		// Chat endpoint - conversational mode
+		if (url.pathname === '/chat' && request.method === 'POST') {
+			try {
+				const { messages, generateTitle } = await request.json() as { messages: ChatMessage[]; generateTitle?: boolean };
+				
+				if (!messages || messages.length === 0) {
+					return new Response(JSON.stringify({ error: 'No messages provided' }), {
+						status: 400,
+						headers: { ...CORS_HEADERS, 'Content-Type': 'application/json' },
+					});
+				}
+
+				// Get the last user message for context
+				const lastUserMessage = [...messages].reverse().find(m => m.role === 'user')?.content || '';
+				
+				// Check if we need search context
+				const needsSearch = /how to|what is|find|search|look up|api|documentation|example|tutorial/i.test(lastUserMessage);
+				let searchContext = '';
+				
+				if (needsSearch) {
+					const searchQuery = `javascript bookmarklet ${lastUserMessage}`;
+					searchContext = await searchGoogle(searchQuery, env);
+				}
+
+				const systemPrompt = `You are a helpful AI assistant specializing in creating JavaScript bookmarklets. You have a conversational style and help users iteratively.
+
+${searchContext ? `RELEVANT WEB SEARCH RESULTS:\n${searchContext}\n\n` : ''}
+
+YOUR BEHAVIOR:
+1. BE CONVERSATIONAL: Ask clarifying questions if the request is vague or could be interpreted multiple ways
+2. UNDERSTAND FIRST: Before generating code, make sure you understand exactly what the user wants
+3. ASK ABOUT CONTEXT: Ask which websites they'll use it on, what specific behavior they want, any edge cases
+4. SUGGEST IMPROVEMENTS: If you can make the bookmarklet better, ask if they'd like those features
+5. GENERATE WHEN READY: Only generate the final bookmarklet code when you have enough information
+
+WHEN GENERATING CODE:
+- Output the bookmarklet starting with: javascript:(function(){...})();
+- Surround code with \`\`\`javascript and \`\`\` markers
+- Make code CSP-friendly (no eval, no innerHTML with scripts)
+- Use try-catch for error handling
+- Use modern APIs with optional chaining (?.)
+
+SITE-SPECIFIC LIMITATION:
+If the user asks for something that requires internal website APIs, auth systems, encrypted data, or server-side info (Kahoot answers, Blooket hacks, game cheats, bypassing paywalls, etc.), explain that this isn't possible with bookmarklets and suggest they contact seltrahelpcenter@gmail.com for custom requests.
+
+CONVERSATION STYLE:
+- Be friendly and helpful
+- Use short, clear responses
+- Ask one or two questions at a time, not a long list
+- When you have enough info, generate the code without asking more questions`;
+
+				// Build messages array for API, limit to last ~1000 messages worth
+				const limitedMessages = messages.slice(-100); // Keep last 100 messages max for context window
+				
+				const apiMessages = [
+					{ role: 'system', content: systemPrompt },
+					...limitedMessages.map(m => ({ role: m.role, content: m.content }))
+				];
+
+				const response = await fetch('https://api.cerebras.ai/v1/chat/completions', {
+					method: 'POST',
+					headers: {
+						'Content-Type': 'application/json',
+						'Authorization': `Bearer ${env.CEREBRAS_API_KEY}`,
+					},
+					body: JSON.stringify({
+						model: 'llama-3.3-70b',
+						max_tokens: 8192,
+						temperature: 0.7,
+						messages: apiMessages
+					}),
+				});
+
+				const responseText = await response.text();
+				let data: { choices?: Array<{ message?: { content?: string } }>; error?: { message: string } };
+				
+				try {
+					data = JSON.parse(responseText);
+				} catch {
+					return new Response(JSON.stringify({ error: 'Invalid API response' }), {
+						status: 500,
+						headers: { ...CORS_HEADERS, 'Content-Type': 'application/json' },
+					});
+				}
+				
+				if (data.error || !response.ok) {
+					return new Response(JSON.stringify({ error: 'API Error', details: data.error?.message }), {
+						status: 500,
+						headers: { ...CORS_HEADERS, 'Content-Type': 'application/json' },
+					});
+				}
+				
+				const reply = data.choices?.[0]?.message?.content?.trim() || '';
+				
+				// Check if the reply contains bookmarklet code
+				const codeMatch = reply.match(/```(?:javascript|js)?\s*(javascript:\s*[\s\S]*?)```/i);
+				const hasCode = codeMatch !== null;
+				let extractedCode = '';
+				
+				if (hasCode && codeMatch) {
+					extractedCode = codeMatch[1].replace(/\n/g, ' ').replace(/\s+/g, ' ').trim();
+				}
+				
+				// Generate title if requested
+				let title = undefined;
+				if (generateTitle) {
+					title = await generateChatTitle([...messages, { role: 'assistant', content: reply }], env);
+				}
+				
+				return new Response(JSON.stringify({ 
+					reply,
+					hasCode,
+					code: extractedCode,
+					title
+				}), {
+					headers: { ...CORS_HEADERS, 'Content-Type': 'application/json' },
+				});
+			} catch (e) {
+				return new Response(JSON.stringify({ error: 'Failed to process chat', details: String(e) }), {
+					status: 500,
+					headers: { ...CORS_HEADERS, 'Content-Type': 'application/json' },
+				});
+			}
+		}
+		
+		// Legacy generate endpoint - single prompt mode
 		if (url.pathname === '/generate' && request.method === 'POST') {
 			try {
 				const { prompt } = await request.json() as { prompt: string };
