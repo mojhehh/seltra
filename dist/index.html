@@ -500,7 +500,7 @@
       localStorage.setItem('seltra_ai_chats', JSON.stringify(trimmedChats));
     };
 
-    function AIGeneratorModal({ open, onClose }) {
+    function AIGeneratorModal({ open, onClose, bookmarklets = [], websites = [] }) {
       const [chats, setChats] = useState(() => getChats());
       const [activeChatId, setActiveChatId] = useState(null);
       const [input, setInput] = useState('');
@@ -591,7 +591,9 @@
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ 
               messages: chatMessages,
-              generateTitle: isFirstMessage 
+              generateTitle: isFirstMessage,
+              bookmarklets: bookmarklets.map(b => ({ title: b.title, description: b.description })),
+              websites: websites.map(w => ({ name: w.name, description: w.description, url: w.url }))
             })
           });
           const data = await res.json();
@@ -1350,7 +1352,7 @@
           </footer>
 
           <InstructionsModal open={showInstructions} onClose={() => setShowInstructions(false)} />
-          <AIGeneratorModal open={showAIGenerator} onClose={() => setShowAIGenerator(false)} />
+          <AIGeneratorModal open={showAIGenerator} onClose={() => setShowAIGenerator(false)} bookmarklets={bookmarklets} websites={websites} />
           <SupportModal open={showSupport} onClose={() => setShowSupport(false)} />
         </div>
       );
