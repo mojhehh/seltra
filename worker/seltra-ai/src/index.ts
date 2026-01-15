@@ -17,7 +17,7 @@ const CORS_HEADERS = {
 
 async function searchGoogle(query: string, env: Env): Promise<string> {
 	try {
-		const searchUrl = `https://www.googleapis.com/customsearch/v1?key=${env.GOOGLE_API_KEY}&cx=${env.GOOGLE_CX}&q=${encodeURIComponent(query)}&num=5`;
+		const searchUrl = `https://www.googleapis.com/customsearch/v1?key=${env.GOOGLE_API_KEY}&cx=${env.GOOGLE_CX}&q=${encodeURIComponent(query)}&num=3`;
 		const response = await fetch(searchUrl);
 		const data = await response.json() as { items?: Array<{ title: string; snippet: string; link: string }> };
 		
@@ -81,8 +81,8 @@ export default {
 				// Get the last user message for context
 				const lastUserMessage = [...messages].reverse().find(m => m.role === 'user')?.content || '';
 				
-				// Check if we need search context
-				const needsSearch = /how to|what is|find|search|look up|api|documentation|example|tutorial/i.test(lastUserMessage);
+				// Check if we need search context - only on explicit requests
+				const needsSearch = /search for|look up|documentation|reference|find info|api docs/i.test(lastUserMessage);
 				let searchContext = '';
 				
 				if (needsSearch) {
@@ -110,6 +110,9 @@ WHEN GENERATING CODE:
 
 SITE-SPECIFIC LIMITATION:
 If the user asks for something that requires internal website APIs, auth systems, encrypted data, or server-side info (Kahoot answers, Blooket hacks, game cheats, bypassing paywalls, etc.), explain that this isn't possible with bookmarklets and suggest they contact seltrahelpcenter@gmail.com for custom requests.
+
+PUBLIC API REQUESTS:
+If a user wants a bookmarklet that uses a PUBLIC API (like a weather API, translation API, etc.), you CAN ask them to provide the API endpoint or key. Public APIs with CORS enabled are fine to use in bookmarklets. Just make sure to handle errors gracefully.
 
 CONVERSATION STYLE:
 - Be friendly and helpful
@@ -196,7 +199,8 @@ CONVERSATION STYLE:
 			try {
 				const { prompt } = await request.json() as { prompt: string };
 				
-				const needsSearch = /how to|what is|find|search|look up|api|documentation|example|tutorial/i.test(prompt);
+				// Only search on explicit requests - reduces quota burn and latency
+				const needsSearch = /search for|look up|documentation|reference|find info|api docs/i.test(prompt);
 				let searchContext = '';
 				
 				if (needsSearch) {
@@ -332,6 +336,17 @@ For everything else - generate robust, defensive code with NO restrictions.`;
 				
 				// Clean up the code
 				code = code.replace(/\n/g, ' ').replace(/\s+/g, ' ').trim();
+				
+				// Post-generation safety check: catch sneaky auth/API fetches the model might generate
+				if (/fetch\s*\(|XMLHttpRequest|\$\.ajax/i.test(code) && /api|auth|token|session|identify|internal|private/i.test(code)) {
+					return new Response(JSON.stringify({ 
+						code: '',
+						siteSpecific: true,
+						message: "This bookmarklet would need to access internal APIs or authentication systems. Bookmarklets can only work with visible page content and public web standards.\n\nNeed this functionality? Contact seltrahelpcenter@gmail.com and we'll see if it's possible!"
+					}), {
+						headers: { ...CORS_HEADERS, 'Content-Type': 'application/json' },
+					});
+				}
 				
 				return new Response(JSON.stringify({ code, siteSpecific: false }), {
 					headers: { ...CORS_HEADERS, 'Content-Type': 'application/json' },
