@@ -1,0 +1,1652 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="description" content="Seltra - A collection of powerful bookmarklets to enhance your browsing experience. Copy, save, and share useful bookmarklets." />
+    <meta name="keywords" content="bookmarklets, javascript, browser tools, productivity" />
+    <meta name="author" content="Seltra" />
+    <meta name="theme-color" content="#FF6B35" />
+    <title>Seltra Bookmarklets</title>
+    <link rel="icon" type="image/png" href="/favicon.png">
+    <link rel="apple-touch-icon" href="/favicon.png">
+
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+    <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-auth-compat.js"></script>
+
+    <style>
+        .fade-glow {
+            opacity: 0;
+            transition: opacity 0.8s ease-in-out 0.75s;
+        }
+
+        .fade-glow.show {
+            opacity: 1;
+        }
+
+        .fade-item {
+            opacity: 0;
+            transform: translateY(10px);
+            transition: opacity 0.7s ease-in-out, transform 0.7s ease-in-out;
+        }
+
+        .fade-item.show {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .glow-top-left {
+            position: fixed;
+            top: 0;
+            left: -50px;
+            width: 300px;
+            pointer-events: none;
+            z-index: -1;
+        }
+
+        .glow-top-right {
+            position: fixed;
+            top: 0;
+            right: -50px;
+            width: 300px;
+            pointer-events: none;
+            transform: scaleX(-1);
+            z-index: -1;
+        }
+
+        .glow-bottom-left {
+            position: fixed;
+            bottom: 0;
+            left: -50px;
+            width: 300px;
+            pointer-events: none;
+            transform: scaleX(-1);
+            z-index: -1;
+        }
+
+        .glow-bottom-right {
+            position: fixed;
+            bottom: 0;
+            right: -50px;
+            width: 300px;
+            pointer-events: none;
+            z-index: -1;
+        }
+
+        .chip {
+            transition: transform .18s ease, box-shadow .18s ease, background .18s ease;
+            border: 1px solid rgba(0, 0, 0, 0.04);
+            background: white;
+            display: inline-flex;
+            align-items: center;
+            padding: .375rem .9rem;
+            border-radius: 999px;
+            gap: .5rem;
+        }
+
+        .chip:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.06);
+        }
+
+        .chip.active {
+            background: linear-gradient(90deg, #FF8C42, #FF6B35);
+            color: white;
+            box-shadow: 0 8px 26px rgba(255, 107, 53, 0.18), 0 0 28px rgba(255, 140, 0, 0.14);
+            border-color: rgba(255, 107, 53, 0.85);
+            transform: translateY(-2px) scale(1.02);
+        }
+
+        .underline {
+            height: 4px;
+            background: linear-gradient(90deg, #FF8C42, #FF6B35);
+            border-radius: 999px;
+            transition: transform .22s cubic-bezier(.2, .9, .2, 1), width .22s cubic-bezier(.2, .9, .2, 1);
+            will-change: transform, width;
+        }
+
+        .search-input {
+            border-radius: 9999px;
+            box-shadow: 0 6px 24px rgba(255, 140, 0, 0.06);
+            border: 1px solid rgba(255, 140, 0, 0.12);
+            padding-left: 3.5rem;
+        }
+
+        .count-badge {
+            background: rgba(0, 0, 0, 0.06);
+            padding: 2px 8px;
+            border-radius: 999px;
+            font-size: 12px;
+            margin-left: 8px;
+        }
+
+        mark.match {
+            background: rgba(255, 214, 187, 0.9);
+            padding: 0 2px;
+            border-radius: 3px;
+            color: inherit;
+            font-weight: 700;
+        }
+
+        .no-scroll::-webkit-scrollbar {
+            display: none;
+        }
+
+        .line-clamp-2 {
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+    </style>
+
+    <script>
+        window.addEventListener("DOMContentLoaded", () => {
+            document.body.classList.add("fade-all");
+            setTimeout(() => {
+                document.body.classList.add("show");
+                document.querySelectorAll(".fade-item").forEach(el => el.classList.add("show"));
+                document.querySelectorAll(".fade-glow").forEach(el => el.classList.add("show"));
+            }, 100);
+        });
+    </script>
+</head>
+
+<body class="bg-orange-50">
+    <div id="root"></div>
+
+    <img src="https://raw.githubusercontent.com/mojhehh/seltra/2ad6291b8d372b60fed9482159267066e7dd7bc0/kcM9b4ncj.png" class="glow-top-left fade-glow" alt="glow top left" />
+    <img src="https://raw.githubusercontent.com/mojhehh/seltra/2ad6291b8d372b60fed9482159267066e7dd7bc0/kcM9b4ncj.png" class="glow-top-right fade-glow" alt="glow top right" />
+    <img src="https://raw.githubusercontent.com/mojhehh/seltra/2ad6291b8d372b60fed9482159267066e7dd7bc0/kcM9b4ncj.png" class="glow-bottom-left fade-glow" alt="glow bottom left" />
+    <img src="https://raw.githubusercontent.com/mojhehh/seltra/2ad6291b8d372b60fed9482159267066e7dd7bc0/kcM9b4ncj.png" class="glow-bottom-right fade-glow" alt="glow bottom right" />
+
+    <script type="text/babel">
+        const { useState, useEffect, useRef, Component } = React;
+
+    const globalState = {
+      search: '',
+      selectedCategory: '',
+      activeTab: 'bookmarklets'
+    };
+
+    class ErrorBoundary extends Component {
+      constructor(props) {
+        super(props);
+        this.state = { hasError: false, error: null };
+      }
+      static getDerivedStateFromError(error) {
+        return { hasError: true, error };
+      }
+      componentDidCatch(error, errorInfo) {
+        console.error('App Error:', error, errorInfo);
+      }
+      render() {
+        if (this.state.hasError) {
+          return (
+            <div className="min-h-screen flex items-center justify-center bg-orange-50 p-4">
+              <div className="bg-white p-8 rounded-xl shadow-lg max-w-md text-center">
+                <div className="text-4xl mb-4">⚠️</div>
+                <h2 className="text-xl font-bold text-gray-800 mb-2">Something went wrong</h2>
+                <p className="text-gray-600 mb-4">Please try refreshing the page.</p>
+                <button 
+                  onClick={() => window.location.reload()} 
+                  className="px-6 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition"
+                >
+                  Refresh Page
+                </button>
+              </div>
+            </div>
+          );
+        }
+        return this.props.children;
+      }
+    }
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyD-7dcoBdsHa_sD8gRmvrifyLGP3HKKfI4",
+      authDomain: "seltra.firebaseapp.com",
+      databaseURL: "https://seltra-default-rtdb.firebaseio.com",
+      projectId: "seltra",
+      storageBucket: "seltra.firebasestorage.app",
+      messagingSenderId: "1066404835444",
+      appId: "1:1066404835444:web:25fda863eeace41594e121",
+      measurementId: "G-TL3TJW23D2"
+    };
+    if (!window.firebase.apps?.length) {
+      try { firebase.initializeApp(firebaseConfig); } catch(e){ console.warn("Firebase init error:", e.message); }
+    }
+    const firebaseDB = {
+      get: async (path) => { if (!firebase.database) return null; const ref = firebase.database().ref(path); const snap = await ref.once('value'); return snap.val(); },
+      push: async (path, data) => { const ref = firebase.database().ref(path).push(); await ref.set(data); return ref.key; },
+      set: async (path, data) => { await firebase.database().ref(path).set(data); },
+      update: async (path, data) => { await firebase.database().ref(path).update(data); },
+      delete: async (path) => { await firebase.database().ref(path).remove(); },
+      listen: (path, cb) => { const ref = firebase.database().ref(path); const handler = (snap) => cb(snap.val()); ref.on('value', handler); return () => ref.off('value', handler); }
+    };
+    const firebaseAuth = {
+      signIn: async (email, password) => { if (!firebase.auth) throw new Error("Firebase Auth not loaded."); return firebase.auth().signInWithEmailAndPassword(email, password); },
+      signOut: async () => { if (!firebase.auth) return; return firebase.auth().signOut(); },
+      getCurrentUser: () => { if (!firebase.auth) return null; return firebase.auth().currentUser; },
+      isAdmin: async () => { const user = firebase.auth && firebase.auth().currentUser; if (!user) return false; const admins = await firebaseDB.get('admins/' + user.uid); return !!admins; },
+      onAuthStateChanged: (cb) => { if (!firebase.auth) return () => {}; return firebase.auth().onAuthStateChanged(cb); }
+    };
+
+    function Logo({ size = "default" }) {
+      const sizes = { small: "h-8", default: "h-12", large: "h-16" };
+      return (
+        <div className={`flex items-center gap-3 ${sizes[size]} transition hover:scale-105 hover:opacity-90 cursor-pointer`}>
+          <svg viewBox="0 0 48 48" className={sizes[size]} fill="none" xmlns="http://www.w3.org/2000/svg">
+            <defs>
+              <linearGradient id="orangeGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stopColor="#FF8C42" />
+                <stop offset="100%" stopColor="#FF6B35" />
+              </linearGradient>
+            </defs>
+            <rect x="8" y="12" width="32" height="6" rx="3" fill="url(#orangeGradient)" />
+            <rect x="8" y="21" width="24" height="6" rx="3" fill="url(#orangeGradient)" opacity="0.7" />
+            <rect x="8" y="30" width="28" height="6" rx="3" fill="url(#orangeGradient)" opacity="0.5" />
+            <circle cx="38" cy="24" r="6" fill="url(#orangeGradient)" />
+          </svg>
+          <span className="font-bold text-3xl tracking-tight bg-gradient-to-r from-orange-500 to-orange-600 bg-clip-text text-transparent">seltra</span>
+        </div>
+      );
+    }
+    function Button({ children, className = '', onClick, type = 'button', disabled }) {
+      return <button type={type} onClick={onClick} disabled={disabled} className={`px-3 py-2 rounded ${disabled ? 'opacity-60 cursor-not-allowed' : ''} ${className}`}>{children}</button>;
+    }
+    function Input(props) { return <input {...props} className={`border rounded px-3 py-2 w-full ${props.className || ''}`} />; }
+    function Textarea(props) { return <textarea {...props} className={`border rounded px-3 py-2 w-full ${props.className || ''}`} />; }
+    function Label({ children }) { return <label className="block text-sm font-medium text-gray-700 mb-1">{children}</label>; }
+    function Card({ children, className = '' }) { return <div className={`bg-white rounded shadow-sm p-4 ${className}`}>{children}</div>; }
+    function CardHeader({ children }) { return <div className="mb-2">{children}</div>; }
+    function CardTitle({ children }) { return <h3 className="text-lg font-semibold">{children}</h3>; }
+    function CardContent({ children }) { return <div>{children}</div>; }
+    function Link({ to, children, className = '' }) { return <a href={to} className={className}>{children}</a>; }
+
+    if (!window.__toastStylesAdded) {
+      window.__toastStylesAdded = true;
+      const style = document.createElement("style");
+      style.innerHTML = `
+        .toast { position: fixed; top: 20px; left: 50%; transform: translateX(-50%) translateY(-100px); background: white; border: 2px solid #FF6B35; border-radius: 12px; padding: 15px 40px; min-width: 200px; max-width: 90vw; box-shadow: 0 8px 32px rgba(0,0,0,0.2); display:flex; flex-direction:column; align-items:center; animation: slide-in 0.4s ease forwards; z-index:99999; font-weight:600; font-size:15px; text-align:center; color: #333; }
+        .toast-bar { width:100%; height:4px; background: linear-gradient(90deg, #FF8C42, #FF6B35); border-radius:5px; margin-top:10px; animation: shrink 2s linear forwards; }
+        .toast-slide-up { animation: slide-out 0.4s ease forwards; }
+        @keyframes slide-in { from { transform: translateX(-50%) translateY(-100px); opacity:0; } to { transform: translateX(-50%) translateY(0); opacity:1; } }
+        @keyframes slide-out { from { transform: translateX(-50%) translateY(0); opacity:1; } to { transform: translateX(-50%) translateY(-100px); opacity:0; } }
+        @keyframes shrink { from { width:100%; } to { width:0%; } }
+      `;
+      document.head.appendChild(style);
+    }
+    let toastLocked = false;
+    function showToast(message) {
+      if (toastLocked) return;
+      toastLocked = true;
+      const toast = document.createElement('div');
+      toast.className = 'toast';
+      toast.innerHTML = `<div>${message}</div><div class="toast-bar"></div>`;
+      document.body.appendChild(toast);
+      setTimeout(() => toast.classList.add('toast-slide-up'), 2000);
+      setTimeout(() => { toastLocked = false; }, 2200);
+      setTimeout(() => toast.remove(), 2500);
+    }
+
+    function BookmarkletCard({ bookmarklet }) {
+      const [copying, setCopying] = useState(false);
+      const copy = async () => {
+        if (copying) return;
+        setCopying(true);
+        try {
+          await navigator.clipboard.writeText(bookmarklet.code || '');
+          showToast('Bookmarklet copied to clipboard!');
+        } catch (err) {
+          console.error('Copy failed:', err);
+          showToast('Copy failed — select the code and copy manually.');
+        } finally {
+          setTimeout(() => setCopying(false), 300);
+        }
+      };
+      return (
+        <div className="border p-4 rounded-xl bg-white shadow transition-all duration-200 hover:shadow-lg hover:-translate-y-1 hover:border-orange-500">
+          <h4 className="font-semibold text-gray-900">{bookmarklet.title || bookmarklet.name || 'Untitled'}</h4>
+          {bookmarklet.description && <p className="text-sm text-gray-600 mt-1">{bookmarklet.description}</p>}
+          <div className="mt-3 flex gap-2 items-center justify-start -ml-2">
+            <Button 
+              className="p-1 rounded-lg hover:bg-orange-100 active:scale-95 flex items-center justify-center focus:outline-none focus:ring-2 focus:ring-orange-400 focus:ring-offset-2" 
+              onClick={copy}
+              disabled={copying}
+              aria-label={`Copy ${bookmarklet.title || 'bookmarklet'} to clipboard`}
+              title="Copy to clipboard"
+            >
+              <img src="https://raw.githubusercontent.com/mojhehh/seltra/2cba1ce3fe4b76f73cb62819f37d59af429b9bde/3964485.png" alt="" className={`h-[30px] w-[30px] transition-transform duration-200 hover:scale-110 ${copying ? 'opacity-50' : ''}`} aria-hidden="true" />
+            </Button>
+            {bookmarklet.credits && <a href={bookmarklet.credits} target="_blank" rel="noopener noreferrer" className="text-sm text-orange-500 hover:text-orange-600 hover:underline ml-2">Credits</a>}
+          </div>
+        </div>
+      );
+    }
+
+    function InstructionsModal({ open, onClose }) {
+      useEffect(() => {
+        if (!open) return;
+        const handleEsc = (e) => { if (e.key === 'Escape') onClose(); };
+        window.addEventListener('keydown', handleEsc);
+        return () => window.removeEventListener('keydown', handleEsc);
+      }, [open, onClose]);
+
+      if (!open) return null;
+      return (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4" onClick={onClose}>
+          <div className="bg-white p-6 rounded-xl max-w-lg w-full shadow-2xl" onClick={e => e.stopPropagation()}>
+            <h2 className="text-xl font-bold mb-4 text-gray-900">How to use bookmarklets</h2>
+            <div className="space-y-3 text-gray-700">
+              <p><strong>1.</strong> Create a new bookmark by clicking the share button, then "Add to Bookmarks".</p>
+              <p><strong>2.</strong> Copy a bookmarklet code by clicking the copy button on any bookmarklet card.</p>
+              <p><strong>3.</strong> Edit your newly created bookmark: hold/right-click on it and select "Edit".</p>
+              <p><strong>4.</strong> Paste the copied code into the URL field and save.</p>
+              <p><strong>5.</strong> To run it, open the page you want and click the bookmark!</p>
+            </div>
+            <p className="text-sm text-gray-500 mt-4">Video tutorial coming soon.</p>
+            <div className="text-right mt-6">
+              <Button className="bg-orange-500 hover:bg-orange-600 text-white transition px-6" onClick={onClose}>Got it!</Button>
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    function AIGeneratorModal({ open, onClose }) {
+      const [prompt, setPrompt] = useState('');
+      const [generatedCode, setGeneratedCode] = useState('');
+      const [loading, setLoading] = useState(false);
+      const [error, setError] = useState('');
+      const [siteSpecific, setSiteSpecific] = useState(null);
+
+      useEffect(() => {
+        if (!open) return;
+        const handleEsc = (e) => { if (e.key === 'Escape') onClose(); };
+        window.addEventListener('keydown', handleEsc);
+        return () => window.removeEventListener('keydown', handleEsc);
+      }, [open, onClose]);
+
+      const generate = async () => {
+        if (!prompt.trim()) return;
+        setLoading(true);
+        setError('');
+        setGeneratedCode('');
+        setSiteSpecific(null);
+        try {
+          const res = await fetch('https://seltra-ai.modmojheh.workers.dev/generate', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ prompt: prompt.trim() })
+          });
+          const data = await res.json();
+          if (data.error) throw new Error(data.error);
+          if (data.siteSpecific) {
+            setSiteSpecific(data.message);
+          } else {
+            setGeneratedCode(data.code || '');
+          }
+        } catch (e) {
+          setError('Failed to generate. Please try again.');
+        } finally {
+          setLoading(false);
+        }
+      };
+
+      const copyCode = async () => {
+        try {
+          await navigator.clipboard.writeText(generatedCode);
+          showToast('Code copied!');
+        } catch { showToast('Copy failed'); }
+      };
+
+      if (!open) return null;
+      return (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4" onClick={onClose}>
+          <div className="bg-white p-6 rounded-xl max-w-2xl w-full shadow-2xl max-h-[90vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
+            <div className="flex items-center gap-3 mb-4">
+              <div className="w-10 h-10 bg-gradient-to-br from-orange-400 to-orange-600 rounded-lg flex items-center justify-center">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2"><path d="M12 2v4m0 12v4m-6-6H2m20 0h-4m-1.5-7.5L14 6m-4 12l-2.5 2.5M18 18l-2.5-2.5M6 6l2.5 2.5"/></svg>
+              </div>
+              <div>
+                <h2 className="text-xl font-bold text-gray-900">AI Bookmarklet Generator</h2>
+                <p className="text-sm text-gray-500">Describe what you want and AI will create it</p>
+              </div>
+            </div>
+            
+            <div className="space-y-4">
+              <div>
+                <Label>What should the bookmarklet do?</Label>
+                <Textarea 
+                  value={prompt} 
+                  onChange={(e) => setPrompt(e.target.value)} 
+                  placeholder="e.g., Remove all images from the page, dark mode toggle, auto-scroll page..."
+                  rows={3}
+                  className="mt-1"
+                />
+              </div>
+              
+              <Button 
+                onClick={generate} 
+                disabled={loading || !prompt.trim()}
+                className="w-full bg-gradient-to-r from-orange-500 to-orange-600 text-white py-3 font-medium"
+              >
+                {loading ? (
+                  <span className="flex items-center justify-center gap-2">
+                    <svg className="animate-spin h-5 w-5" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none"/><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"/></svg>
+                    Generating...
+                  </span>
+                ) : 'Generate Bookmarklet'}
+              </Button>
+
+              {error && <div className="bg-red-50 border border-red-200 text-red-700 p-3 rounded-lg text-sm">{error}</div>}
+
+              {siteSpecific && (
+                <div className="bg-amber-50 border border-amber-200 p-4 rounded-lg">
+                  <div className="flex items-start gap-3">
+                    <div className="w-8 h-8 bg-amber-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#d97706" strokeWidth="2"><path d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+                    </div>
+                    <div>
+                      <h4 className="font-semibold text-amber-800 mb-1">Site-Specific Request Detected</h4>
+                      <p className="text-sm text-amber-700 mb-3">{siteSpecific}</p>
+                      <a 
+                        href="https://github.com/mojhehh/seltra/issues/new?labels=enhancement,bookmarklet-request&title=Bookmarklet%20Request&body=Please%20describe%20the%20bookmarklet%20you%20need..." 
+                        target="_blank" 
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center gap-2 bg-amber-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-amber-700 transition"
+                      >
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 5v14m-7-7h14"/></svg>
+                        Request This Bookmarklet
+                      </a>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {generatedCode && (
+                <div className="space-y-3">
+                  <Label>Generated Code</Label>
+                  <div className="relative">
+                    <pre className="bg-gray-900 text-green-400 p-4 rounded-lg text-sm overflow-x-auto whitespace-pre-wrap break-all max-h-64 overflow-y-auto">{generatedCode}</pre>
+                    <button 
+                      onClick={copyCode}
+                      className="absolute top-2 right-2 bg-orange-500 text-white px-3 py-1.5 rounded-lg text-sm hover:bg-orange-600 transition flex items-center gap-1"
+                    >
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>
+                      Copy
+                    </button>
+                  </div>
+                  <div className="bg-blue-50 border border-blue-200 p-3 rounded-lg">
+                    <p className="text-sm text-blue-800"><strong>How to use:</strong> Copy the code above, create a new bookmark in your browser, and paste the code as the URL.</p>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            <div className="flex justify-between items-center mt-6 pt-4 border-t">
+              <p className="text-xs text-gray-400">Powered by AI • Use responsibly</p>
+              <Button className="border hover:bg-gray-100" onClick={onClose}>Close</Button>
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    function SupportModal({ open, onClose }) {
+      useEffect(() => {
+        if (!open) return;
+        const handleEsc = (e) => { if (e.key === 'Escape') onClose(); };
+        window.addEventListener('keydown', handleEsc);
+        return () => window.removeEventListener('keydown', handleEsc);
+      }, [open, onClose]);
+
+      if (!open) return null;
+      return (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4" onClick={onClose}>
+          <div className="bg-white p-6 rounded-xl max-w-lg w-full shadow-2xl" onClick={e => e.stopPropagation()}>
+            <div className="flex items-center gap-3 mb-5">
+              <div className="w-10 h-10 bg-gradient-to-br from-orange-400 to-orange-600 rounded-lg flex items-center justify-center">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+              </div>
+              <div>
+                <h2 className="text-xl font-bold text-gray-900">Support & Feedback</h2>
+                <p className="text-sm text-gray-500">We'd love to hear from you</p>
+              </div>
+            </div>
+            <div className="space-y-3">
+              <a href="https://github.com/mojhehh/seltra/issues/new?labels=bug&title=Bug%20Report%3A%20" target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 p-4 border rounded-xl hover:bg-red-50 hover:border-red-200 transition group">
+                <div className="w-12 h-12 bg-red-100 rounded-xl flex items-center justify-center text-red-600 group-hover:bg-red-200 transition">
+                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"/><path d="M12 8v4m0 4h.01"/></svg>
+                </div>
+                <div className="flex-1">
+                  <div className="font-semibold text-gray-900">Report a Bug</div>
+                  <div className="text-sm text-gray-500">Something broken or not working?</div>
+                </div>
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-gray-400 group-hover:text-red-500 transition"><path d="M9 18l6-6-6-6"/></svg>
+              </a>
+              <a href="https://github.com/mojhehh/seltra/issues/new?labels=enhancement,bookmarklet-request&title=Bookmarklet%20Request%3A%20" target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 p-4 border rounded-xl hover:bg-purple-50 hover:border-purple-200 transition group">
+                <div className="w-12 h-12 bg-purple-100 rounded-xl flex items-center justify-center text-purple-600 group-hover:bg-purple-200 transition">
+                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 2v4m0 12v4m-6-6H2m20 0h-4m-1.5-7.5L14 6m-4 12l-2.5 2.5M18 18l-2.5-2.5M6 6l2.5 2.5"/></svg>
+                </div>
+                <div className="flex-1">
+                  <div className="font-semibold text-gray-900">Request a Bookmarklet</div>
+                  <div className="text-sm text-gray-500">Want a specific bookmarklet created?</div>
+                </div>
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-gray-400 group-hover:text-purple-500 transition"><path d="M9 18l6-6-6-6"/></svg>
+              </a>
+              <a href="https://github.com/mojhehh/seltra/issues/new?labels=enhancement&title=Feature%20Request%3A%20" target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 p-4 border rounded-xl hover:bg-blue-50 hover:border-blue-200 transition group">
+                <div className="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center text-blue-600 group-hover:bg-blue-200 transition">
+                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 2v4m6.364 1.636l-2.828 2.828M22 12h-4m-1.636 6.364l-2.828-2.828M12 22v-4m-6.364-1.636l2.828-2.828M2 12h4m1.636-6.364l2.828 2.828"/></svg>
+                </div>
+                <div className="flex-1">
+                  <div className="font-semibold text-gray-900">Suggest a Feature</div>
+                  <div className="text-sm text-gray-500">Have an idea to improve Seltra?</div>
+                </div>
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-gray-400 group-hover:text-blue-500 transition"><path d="M9 18l6-6-6-6"/></svg>
+              </a>
+              <a href="https://github.com/mojhehh/seltra/discussions" target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 p-4 border rounded-xl hover:bg-green-50 hover:border-green-200 transition group">
+                <div className="w-12 h-12 bg-green-100 rounded-xl flex items-center justify-center text-green-600 group-hover:bg-green-200 transition">
+                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+                </div>
+                <div className="flex-1">
+                  <div className="font-semibold text-gray-900">Join Discussions</div>
+                  <div className="text-sm text-gray-500">Ask questions, share ideas, connect</div>
+                </div>
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-gray-400 group-hover:text-green-500 transition"><path d="M9 18l6-6-6-6"/></svg>
+              </a>
+            </div>
+            <div className="flex justify-between items-center mt-6 pt-4 border-t">
+              <div className="flex gap-3 text-xs text-gray-400">
+                <a href="#/terms" className="hover:text-orange-600" onClick={onClose}>Terms</a>
+                <a href="#/privacy" className="hover:text-orange-600" onClick={onClose}>Privacy</a>
+              </div>
+              <Button className="border hover:bg-gray-100" onClick={onClose}>Close</Button>
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    function Search({ value, setValue, activeTab }) {
+      const inputRef = useRef(null);
+      
+      useEffect(() => {
+        const handleKeyDown = (e) => {
+          if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
+            e.preventDefault();
+            inputRef.current?.focus();
+          }
+          if (e.key === 'Escape' && document.activeElement === inputRef.current && value) {
+            setValue('');
+          }
+        };
+        window.addEventListener('keydown', handleKeyDown);
+        return () => window.removeEventListener('keydown', handleKeyDown);
+      }, [value, setValue]);
+
+      return (
+        <div className="mb-4 fade-item">
+          <div className="relative max-w-4xl mx-auto">
+            <div className="absolute inset-y-0 left-4 flex items-center pointer-events-none">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" className="text-orange-400" aria-hidden="true"><path d="M21 21l-4.35-4.35M17 11a6 6 0 11-12 0 6 6 0 0112 0z" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"/></svg>
+            </div>
+            <input 
+              ref={inputRef}
+              id="search-input" 
+              className="search-input w-full pr-10 py-3 border border-transparent focus:outline-none focus:ring-2 focus:ring-orange-400 focus:border-orange-400" 
+              placeholder={activeTab === 'websites' ? 'Search websites... (Ctrl+K)' : 'Search bookmarklets... (Ctrl+K)'} 
+              value={value} 
+              onChange={e => setValue(e.target.value)} 
+              aria-label={activeTab === 'websites' ? 'Search websites' : 'Search bookmarklets'} 
+              type="search"
+              autoComplete="off"
+              spellCheck="false"
+            />
+            {value && (
+              <button 
+                onClick={() => { setValue(''); inputRef.current?.focus(); }} 
+                aria-label="Clear search" 
+                title="Clear search (Esc)" 
+                className="absolute right-3 top-1/2 -translate-y-1/2 w-6 h-6 flex items-center justify-center rounded-full hover:bg-orange-100 transition-colors text-gray-500 hover:text-gray-700 focus:outline-none focus:ring-2 focus:ring-orange-400"
+              >
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+              </button>
+            )}
+          </div>
+        </div>
+      );
+    }
+
+    function CategoryBar({ categories, counts = {}, selectedId, onSelect }) {
+      const containerRef = useRef(null);
+      const refs = useRef({});
+      const [underline, setUnderline] = useState({ left: 0, width: 0 });
+
+      function pickActiveElement() {
+        const c = containerRef.current;
+        if (!c) return null;
+        if (selectedId === "") return refs.current['all'] || c.querySelector('button');
+        return refs.current[selectedId] || c.querySelector('[data-active="true"]') || c.querySelector('button');
+      }
+
+      function recomputeUnderline() {
+        const c = containerRef.current;
+        const active = pickActiveElement();
+        if (!c || !active) { setUnderline({ left:0, width:0 }); return; }
+        const parentRect = c.getBoundingClientRect();
+        const rect = active.getBoundingClientRect();
+        requestAnimationFrame(() => {
+          setUnderline({ left: rect.left - parentRect.left, width: rect.width });
+          const offsetLeft = active.offsetLeft - c.offsetLeft;
+          const visibleLeft = c.scrollLeft;
+          const visibleRight = c.scrollLeft + c.clientWidth;
+          const targetLeft = offsetLeft - 12;
+          const targetRight = offsetLeft + active.offsetWidth + 12;
+          if (targetLeft < visibleLeft) c.scrollTo({ left: targetLeft, behavior: 'smooth' });
+          if (targetRight > visibleRight) c.scrollTo({ left: targetRight - c.clientWidth, behavior: 'smooth' });
+        });
+      }
+
+      useEffect(() => { recomputeUnderline(); const id = setTimeout(recomputeUnderline, 80); return () => clearTimeout(id); }, [selectedId, categories]);
+      useEffect(() => {
+        const obs = new ResizeObserver(() => recomputeUnderline());
+        if (containerRef.current) obs.observe(containerRef.current);
+        window.addEventListener('resize', recomputeUnderline);
+        return () => { try { obs.disconnect(); } catch(_){} window.removeEventListener('resize', recomputeUnderline); };
+      }, []);
+      useEffect(() => {
+        const el = containerRef.current; if (!el) return;
+        const mo = new MutationObserver(() => recomputeUnderline());
+        mo.observe(el, { childList:true, subtree:true, characterData:true });
+        return () => mo.disconnect();
+      }, []);
+
+      return (
+        <div className="mb-6 fade-item">
+          <div className="relative">
+            <div ref={containerRef} className="flex gap-3 overflow-x-auto py-3 px-2 bg-white border border-orange-100 rounded-2xl shadow-sm no-scroll" role="toolbar" aria-label="Categories" tabIndex={0}>
+              <button ref={el => refs.current['all'] = el} data-active={selectedId === "" ? "true" : "false"} aria-pressed={selectedId === "" ? "true" : "false"} onClick={() => onSelect('')} className={`chip ${selectedId === "" ? 'active' : ''}`} type="button">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M12 2v20" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round"/></svg>
+                <span>All</span>
+                <span className="count-badge" aria-hidden="true">{counts.all ?? 0}</span>
+              </button>
+
+              {categories.map(cat => (
+                <button key={cat.id} ref={el => refs.current[cat.id] = el} data-active={selectedId === cat.id ? "true" : "false"} aria-pressed={selectedId === cat.id ? "true" : "false"} onClick={() => onSelect(cat.id)} className={`chip ${selectedId === cat.id ? 'active' : ''}`} type="button">
+                  <span>{cat.name}</span>
+                  <span className="count-badge" aria-hidden="true">{counts[cat.id] ?? 0}</span>
+                </button>
+              ))}
+            </div>
+
+            <div aria-hidden="true" className="absolute bottom-1 left-0" style={{ transform:`translateX(${underline.left}px)`, width: underline.width ? underline.width + 'px' : '0px' }}>
+              <div className="underline" style={{ width: '100%' }} />
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    function HighlightedName({ name, q }) {
+      if (!q) return <span>{name}</span>;
+      const lower = name.toLowerCase();
+      const ql = q.toLowerCase();
+      const idx = lower.indexOf(ql);
+      if (idx === -1) return <span>{name}</span>;
+      const before = name.slice(0, idx);
+      const match = name.slice(idx, idx + q.length);
+      const after = name.slice(idx + q.length);
+      return <span>{before}<mark className="match">{match}</mark>{after}</span>;
+    }
+
+    function WebsiteCard({ website }) {
+      const isComingSoon = website.comingSoon || /\(coming soon\)/i.test(website.name || '');
+      const displayName = (website.name || 'Untitled').replace(/\s*\(coming soon\)\s*/i, '');
+      return (
+        <a 
+          href={isComingSoon ? '#' : website.url} 
+          target={isComingSoon ? '_self' : '_blank'} 
+          rel="noopener noreferrer"
+          className={`block border rounded-xl bg-white shadow transition-all duration-200 hover:shadow-lg hover:-translate-y-1 hover:border-orange-500 overflow-hidden group ${isComingSoon ? 'cursor-default' : ''}`}
+          onClick={isComingSoon ? (e) => e.preventDefault() : undefined}
+        >
+          {website.image ? (
+            <div className="h-40 overflow-hidden bg-gray-100 relative">
+              <img 
+                src={website.image} 
+                alt={displayName} 
+                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                onError={(e) => { e.target.style.display = 'none'; }}
+              />
+              {isComingSoon && <div className="absolute top-2 right-2 bg-orange-500 text-white text-xs font-semibold px-2 py-1 rounded-full">Coming Soon</div>}
+            </div>
+          ) : isComingSoon ? (
+            <div className="h-40 bg-gradient-to-br from-orange-100 to-orange-50 flex items-center justify-center">
+              <span className="bg-orange-500 text-white text-sm font-semibold px-3 py-1.5 rounded-full">Coming Soon</span>
+            </div>
+          ) : null}
+          <div className="p-4">
+            <div className="flex items-center gap-2">
+              <h4 className="font-semibold text-gray-900">{displayName}</h4>
+              {!isComingSoon && <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-orange-400 opacity-0 group-hover:opacity-100 transition-opacity">
+                <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/>
+                <polyline points="15 3 21 3 21 9"/>
+                <line x1="10" y1="14" x2="21" y2="3"/>
+              </svg>}
+            </div>
+            {website.description && <p className="text-sm text-gray-600 mt-1 line-clamp-6">{website.description}</p>}
+            {!isComingSoon && website.url && <p className="text-xs text-orange-500 mt-2 truncate">{website.url.replace(/^https?:\/\//, '')}</p>}
+          </div>
+        </a>
+      );
+    }
+
+    function TabSwitcher({ activeTab, onTabChange }) {
+      return (
+        <div className="flex justify-center mb-6">
+          <div className="inline-flex bg-white border border-orange-100 rounded-full p-1 shadow-sm">
+            <button
+              onClick={() => onTabChange('bookmarklets')}
+              className={`px-6 py-2 rounded-full text-sm font-medium transition-all ${
+                activeTab === 'bookmarklets'
+                  ? 'bg-gradient-to-r from-orange-500 to-orange-600 text-white shadow-md'
+                  : 'text-gray-600 hover:text-orange-600'
+              }`}
+            >
+              Bookmarklets
+            </button>
+            <button
+              onClick={() => onTabChange('websites')}
+              className={`px-6 py-2 rounded-full text-sm font-medium transition-all ${
+                activeTab === 'websites'
+                  ? 'bg-gradient-to-r from-orange-500 to-orange-600 text-white shadow-md'
+                  : 'text-gray-600 hover:text-orange-600'
+              }`}
+            >
+              Websites
+            </button>
+          </div>
+        </div>
+      );
+    }
+
+    function Home() {
+      const [showInstructions, setShowInstructions] = useState(false);
+      const [showAIGenerator, setShowAIGenerator] = useState(false);
+      const [showSupport, setShowSupport] = useState(false);
+      const [isAdminFlag, setIsAdminFlag] = useState(false);
+      const [categories, setCategories] = useState([]);
+      const [websiteCategories, setWebsiteCategories] = useState([]);
+      const [bookmarklets, setBookmarklets] = useState([]);
+      const [websites, setWebsites] = useState([]);
+      const [loading, setLoading] = useState(true);
+
+      const [search, setSearch] = useState(globalState.search);
+      const [selectedCategory, setSelectedCategory] = useState(globalState.selectedCategory);
+      const [activeTab, setActiveTab] = useState(globalState.activeTab);
+
+      useEffect(() => { globalState.search = search; }, [search]);
+      useEffect(() => { globalState.selectedCategory = selectedCategory; }, [selectedCategory]);
+      useEffect(() => { globalState.activeTab = activeTab; }, [activeTab]);
+
+      useEffect(() => {
+        const timer = setTimeout(() => {
+          document.querySelectorAll(".fade-item").forEach(el => el.classList.add("show"));
+        }, 50);
+        return () => clearTimeout(timer);
+      }, []);
+
+      useEffect(() => {
+        let isMounted = true;
+        const unsub = firebaseAuth.onAuthStateChanged(async (user) => {
+          if (!isMounted) return;
+          if (user) {
+            try { const admin = await firebaseAuth.isAdmin(); if (isMounted) setIsAdminFlag(admin); } catch { if (isMounted) setIsAdminFlag(false); }
+          } else { if (isMounted) setIsAdminFlag(false); }
+        });
+
+        loadData();
+        const offCats = firebaseDB.listen('categories', (data) => { 
+          if (!isMounted) return;
+          if (!data) { setCategories([]); return; } 
+          const arr = Object.keys(data).map(k => ({ id: k, ...data[k] })); 
+          arr.sort((a,b) => (a.order||0)-(b.order||0)); 
+          setCategories(arr); 
+          if (globalState.activeTab === 'bookmarklets' && globalState.selectedCategory && !arr.find(c => c.id === globalState.selectedCategory)) {
+            setSelectedCategory('');
+          }
+        });
+        const offWebCats = firebaseDB.listen('websiteCategories', (data) => { 
+          if (!isMounted) return;
+          if (!data) { setWebsiteCategories([]); return; } 
+          const arr = Object.keys(data).map(k => ({ id: k, ...data[k] })); 
+          arr.sort((a,b) => (a.order||0)-(b.order||0)); 
+          setWebsiteCategories(arr); 
+          if (globalState.activeTab === 'websites' && globalState.selectedCategory && !arr.find(c => c.id === globalState.selectedCategory)) {
+            setSelectedCategory('');
+          }
+        });
+        const offMarks = firebaseDB.listen('bookmarklets', (data) => { 
+          if (!isMounted) return;
+          if (!data) { setBookmarklets([]); return; } 
+          const arr = Object.keys(data).map(k => ({ id: k, ...data[k] })); 
+          arr.sort((a,b) => (a.order||0)-(b.order||0)); 
+          setBookmarklets(arr); 
+        });
+        const offSites = firebaseDB.listen('websites', (data) => { 
+          if (!isMounted) return;
+          if (!data) { setWebsites([]); return; } 
+          const arr = Object.keys(data).map(k => ({ id: k, ...data[k] })); 
+          arr.sort((a,b) => (a.order||0)-(b.order||0)); 
+          setWebsites(arr); 
+        });
+
+        return () => { isMounted = false; offCats(); offWebCats(); offMarks(); offSites(); if (unsub) unsub(); };
+      }, []);
+
+      async function loadData() {
+        setLoading(true);
+        try {
+          const [cats, webCats, marks, sites] = await Promise.all([
+            firebaseDB.get('categories'),
+            firebaseDB.get('websiteCategories'),
+            firebaseDB.get('bookmarklets'),
+            firebaseDB.get('websites')
+          ]);
+          if (cats) { const arr = Object.keys(cats).map(k => ({ id:k, ...cats[k] })); arr.sort((a,b)=>(a.order||0)-(b.order||0)); setCategories(arr); } else setCategories([]);
+          if (webCats) { const arr = Object.keys(webCats).map(k => ({ id:k, ...webCats[k] })); arr.sort((a,b)=>(a.order||0)-(b.order||0)); setWebsiteCategories(arr); } else setWebsiteCategories([]);
+          if (marks) { const arr = Object.keys(marks).map(k => ({ id:k, ...marks[k] })); arr.sort((a,b)=>(a.order||0)-(b.order||0)); setBookmarklets(arr); } else setBookmarklets([]);
+          if (sites) { const arr = Object.keys(sites).map(k => ({ id:k, ...sites[k] })); arr.sort((a,b)=>(a.order||0)-(b.order||0)); setWebsites(arr); } else setWebsites([]);
+        } catch (e) { 
+          console.error('Failed to load data:', e); 
+          setCategories([]);
+          setWebsiteCategories([]);
+          setBookmarklets([]);
+          setWebsites([]);
+        } finally {
+          setLoading(false);
+        }
+      }
+
+      const currentItems = activeTab === 'bookmarklets' ? bookmarklets : websites;
+      const currentCategories = activeTab === 'bookmarklets' ? categories : websiteCategories;
+      const counts = currentCategories.reduce((acc, c) => { 
+        acc[c.id] = currentItems.filter(b => b.categoryId === c.id).length; 
+        return acc; 
+      }, { all: currentItems.length });
+
+      const filteredItems = currentItems.filter(b =>
+        (search.trim() === '' || (b.title || b.name || '').toLowerCase().includes(search.toLowerCase())) &&
+        (selectedCategory === '' || b.categoryId === selectedCategory)
+      );
+
+      const grouped = currentCategories.map(cat => ({ 
+        ...cat, 
+        items: filteredItems.filter(b => b.categoryId === cat.id) 
+      })).filter(c => c.items.length > 0);
+
+      return (
+        <div className="min-h-screen flex flex-col">
+          <header className="border-b bg-white p-4 sticky top-0 z-20">
+            <div className="container mx-auto flex justify-between items-center">
+              <Logo />
+              <div className="flex gap-2 items-center">
+                <Button className="bg-gradient-to-r from-orange-500 to-orange-600 text-white hover:scale-105 transition text-sm" onClick={() => setShowAIGenerator(true)}>✨ AI Generate</Button>
+                <Button className="border hover:bg-neutral-200 transition text-sm" onClick={() => setShowInstructions(true)}>How to Use</Button>
+                <Button className="border hover:bg-neutral-200 transition text-sm" onClick={() => setShowSupport(true)}>Support</Button>
+                <Link to={createPageUrl('Admin')} className="px-1 py-1 rounded">
+                  <img src="https://raw.githubusercontent.com/mojhehh/seltra/28261352f4e6f9a50759d616fda72876a9a39c17/Admin.png" alt="Admin" className="h-8 w-auto" />
+                </Link>
+              </div>
+            </div>
+          </header>
+
+          <main className="container mx-auto px-4 py-8 flex-grow">
+            <section className="text-center mb-6">
+              <h1 className="text-4xl font-bold">Powerful {activeTab === 'bookmarklets' ? 'Bookmarklets' : 'Websites'} <span className="block text-orange-600">All In One Place</span></h1>
+              <p className="mt-2 text-gray-600">{activeTab === 'bookmarklets' ? 'Copy, save, and share these powerful bookmarklets.' : 'Discover useful websites and tools.'}</p>
+            </section>
+
+            <TabSwitcher activeTab={activeTab} onTabChange={(tab) => { setActiveTab(tab); setSelectedCategory(''); }} />
+
+            <Search value={search} setValue={setSearch} activeTab={activeTab} />
+            <div className="max-w-4xl mx-auto">
+              <CategoryBar categories={currentCategories} counts={counts} selectedId={selectedCategory} onSelect={(id) => setSelectedCategory(id)} />
+            </div>
+
+            
+            {loading ? (
+              <div className="flex justify-center py-20"><div className="animate-spin h-10 w-10 border-b-2 rounded-full border-orange-600"></div></div>
+            ) : grouped.length === 0 ? (
+              <div className="text-center py-20 text-gray-500">No {activeTab} found.</div>
+            ) : (
+              grouped.map(cat => (
+                <section key={cat.id} className="mb-10">
+                  <div className="border-l-4 border-orange-500 pl-4 mb-4">
+                    <h2 className="text-2xl font-bold">{cat.name}</h2>
+                    {cat.description && <p className="text-sm text-gray-600">{cat.description}</p>}
+                  </div>
+                  <div className={`grid gap-4 ${activeTab === 'websites' ? 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4' : 'grid-cols-1 md:grid-cols-2 lg:grid-cols-3'}`}>
+                    {cat.items.map(item => 
+                      activeTab === 'bookmarklets' 
+                        ? <BookmarkletCard key={item.id} bookmarklet={item} />
+                        : <WebsiteCard key={item.id} website={item} />
+                    )}
+                  </div>
+                </section>
+              ))
+            )}
+          </main>
+
+          <footer className="border-t bg-white py-8 mt-auto">
+            <div className="container mx-auto px-4">
+              <div className="flex flex-col md:flex-row items-center justify-between gap-4">
+                <div className="flex items-center gap-2">
+                  <img src="/logo.png" alt="Seltra" className="h-6 w-auto" />
+                  <span className="text-gray-600 font-medium">Seltra</span>
+                </div>
+                <div className="flex flex-wrap items-center justify-center gap-4 text-sm">
+                  <a href="#/terms" className="text-gray-500 hover:text-orange-600 transition">Terms of Service</a>
+                  <span className="text-gray-300">•</span>
+                  <a href="#/privacy" className="text-gray-500 hover:text-orange-600 transition">Privacy Policy</a>
+                  <span className="text-gray-300">•</span>
+                  <a href="#/copyright" className="text-gray-500 hover:text-orange-600 transition">Copyright</a>
+                  <span className="text-gray-300">•</span>
+                  <a href="https://github.com/mojhehh/seltra" target="_blank" rel="noopener noreferrer" className="text-gray-500 hover:text-orange-600 transition">GitHub</a>
+                </div>
+                <p className="text-gray-400 text-sm">© {new Date().getFullYear()} Seltra</p>
+              </div>
+            </div>
+          </footer>
+
+          <InstructionsModal open={showInstructions} onClose={() => setShowInstructions(false)} />
+          <AIGeneratorModal open={showAIGenerator} onClose={() => setShowAIGenerator(false)} />
+          <SupportModal open={showSupport} onClose={() => setShowSupport(false)} />
+        </div>
+      );
+    }
+
+    function AdminPage() {
+      const [isAdmin, setIsAdmin] = useState(false);
+      const [categories, setCategories] = useState([]);
+      const [websiteCategories, setWebsiteCategories] = useState([]);
+      const [bookmarklets, setBookmarklets] = useState([]);
+      const [websites, setWebsites] = useState([]);
+      const [loading, setLoading] = useState(true);
+      const [showLogin, setShowLogin] = useState(false);
+      const [email, setEmail] = useState('');
+      const [password, setPassword] = useState('');
+      const [loginError, setLoginError] = useState('');
+      const [categoryForm, setCategoryForm] = useState({ name: '', description: '', order: 0 });
+      const [editCategoryId, setEditCategoryId] = useState(null);
+      const [webCategoryForm, setWebCategoryForm] = useState({ name: '', description: '', order: 0 });
+      const [editWebCategoryId, setEditWebCategoryId] = useState(null);
+      const [bookmarkletForm, setBookmarkletForm] = useState({ title: '', description: '', code: '', categoryId: '', order: 0, credits: '' });
+      const [editId, setEditId] = useState(null);
+      const [websiteForm, setWebsiteForm] = useState({ name: '', description: '', url: '', image: '', categoryId: '', order: 0, comingSoon: false });
+      const [editWebsiteId, setEditWebsiteId] = useState(null);
+      const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
+      const [adminTab, setAdminTab] = useState('bookmarklets');
+
+      useEffect(() => {
+        const unsub = firebaseAuth.onAuthStateChanged(async (user) => {
+          if (!user) { setShowLogin(true); setIsAdmin(false); setLoading(false); return; }
+          try {
+            const adminStatus = await firebaseAuth.isAdmin();
+            if (!adminStatus) { setShowLogin(true); setIsAdmin(false); setLoading(false); return; }
+            setIsAdmin(true); setShowLogin(false); await loadData();
+          } catch (e) { console.error(e); setShowLogin(true); setIsAdmin(false); setLoading(false); }
+        });
+
+        (async () => {
+          setLoading(true);
+          const user = firebaseAuth.getCurrentUser();
+          if (!user) { setShowLogin(true); setLoading(false); } else {
+            try {
+              const adminStatus = await firebaseAuth.isAdmin();
+              if (!adminStatus) { setShowLogin(true); setLoading(false); } else { setIsAdmin(true); setShowLogin(false); await loadData(); }
+            } catch (e) { console.error(e); setShowLogin(true); setLoading(false); }
+          }
+        })();
+
+        return () => { if (unsub) unsub(); };
+      }, []);
+
+      async function handleLogin(e) { e.preventDefault(); setLoginError(''); try { await firebaseAuth.signIn(email, password); } catch (err) { setLoginError(err.message || 'Login failed'); } }
+      const handleLogoutConfirm = () => setShowLogoutConfirm(true);
+      async function handleLogout() { setShowLogoutConfirm(false); try { await firebaseAuth.signOut(); setIsAdmin(false); setShowLogin(true); setEmail(''); setPassword(''); window.location.hash = '#/'; } catch (e) { console.error('Logout failed', e); alert('Logout failed: ' + (e.message || e)); } }
+
+      function LogoutModal({ open, onConfirm, onCancel }) { if (!open) return null; return (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+          <div className="bg-white p-6 rounded max-w-md w-full">
+            <h2 className="text-xl font-bold mb-4">Confirm Logout</h2>
+            <p className="mb-4">Are you sure you want to log out?</p>
+            <div className="flex justify-end gap-2">
+              <button className="border px-4 py-2 rounded" onClick={onCancel}>Cancel</button>
+              <button className="bg-orange-500 text-white px-4 py-2 rounded" onClick={onConfirm}>Logout</button>
+            </div>
+          </div>
+        </div>
+      ); }
+
+      async function loadData() {
+        setLoading(true);
+        try {
+          const [cats, webCats, marks, sites] = await Promise.all([
+            firebaseDB.get('categories'),
+            firebaseDB.get('websiteCategories'),
+            firebaseDB.get('bookmarklets'),
+            firebaseDB.get('websites')
+          ]);
+          if (cats) { const arr = Object.keys(cats).map(k => ({ id:k, ...cats[k] })); arr.sort((a,b)=>(a.order||0)-(b.order||0)); setCategories(arr); } else setCategories([]);
+          if (webCats) { const arr = Object.keys(webCats).map(k => ({ id:k, ...webCats[k] })); arr.sort((a,b)=>(a.order||0)-(b.order||0)); setWebsiteCategories(arr); } else setWebsiteCategories([]);
+          if (marks) { const arr = Object.keys(marks).map(k => ({ id:k, ...marks[k] })); arr.sort((a,b)=>(a.order||0)-(b.order||0)); setBookmarklets(arr); } else setBookmarklets([]);
+          if (sites) { const arr = Object.keys(sites).map(k => ({ id:k, ...sites[k] })); arr.sort((a,b)=>(a.order||0)-(b.order||0)); setWebsites(arr); } else setWebsites([]);
+        } catch (e) { 
+          console.error('Failed to load admin data:', e); 
+          showToast('Failed to load data. Please refresh.');
+        } finally {
+          setLoading(false);
+        }
+      }
+
+      async function handleSaveCategory(e) {
+        e.preventDefault();
+        try {
+          if (!categoryForm.name) { alert('Category name required'); return; }
+          if (editCategoryId) { await firebaseDB.update(`categories/${editCategoryId}`, categoryForm); alert('Category updated'); } else { await firebaseDB.push('categories', categoryForm); alert('Category added'); }
+          setCategoryForm({ name: '', description: '', order: 0 }); setEditCategoryId(null); await loadData();
+        } catch (err) { console.error(err); alert('Failed to save category: ' + (err.message || err)); }
+      }
+      async function handleDeleteCategory(id) { if (!confirm('Delete this category?')) return; try { await firebaseDB.delete(`categories/${id}`); if (editCategoryId === id) { setEditCategoryId(null); setCategoryForm({ name: '', description: '', order: 0 }); } await loadData(); alert('Category deleted'); } catch (err) { console.error(err); alert('Failed to delete category: ' + (err.message || err)); } }
+      function startEditCategory(c) { setEditCategoryId(c.id); setCategoryForm({ name: c.name || '', description: c.description || '', order: c.order || 0 }); window.scrollTo({ top: 0, behavior: 'smooth' }); }
+      function cancelEditCategory() { setEditCategoryId(null); setCategoryForm({ name: '', description: '', order: 0 }); }
+
+      async function handleSaveWebCategory(e) {
+        e.preventDefault();
+        try {
+          if (!webCategoryForm.name) { alert('Category name required'); return; }
+          if (editWebCategoryId) { await firebaseDB.update(`websiteCategories/${editWebCategoryId}`, webCategoryForm); alert('Website category updated'); } else { await firebaseDB.push('websiteCategories', webCategoryForm); alert('Website category added'); }
+          setWebCategoryForm({ name: '', description: '', order: 0 }); setEditWebCategoryId(null); await loadData();
+        } catch (err) { console.error(err); alert('Failed to save website category: ' + (err.message || err)); }
+      }
+      async function handleDeleteWebCategory(id) { if (!confirm('Delete this website category?')) return; try { await firebaseDB.delete(`websiteCategories/${id}`); if (editWebCategoryId === id) { setEditWebCategoryId(null); setWebCategoryForm({ name: '', description: '', order: 0 }); } await loadData(); alert('Website category deleted'); } catch (err) { console.error(err); alert('Failed to delete website category: ' + (err.message || err)); } }
+      function startEditWebCategory(c) { setEditWebCategoryId(c.id); setWebCategoryForm({ name: c.name || '', description: c.description || '', order: c.order || 0 }); }
+      function cancelEditWebCategory() { setEditWebCategoryId(null); setWebCategoryForm({ name: '', description: '', order: 0 }); }
+
+      async function handleSaveBookmarklet(e) {
+        e.preventDefault();
+        try {
+          if (!bookmarkletForm.title || !bookmarkletForm.code || !bookmarkletForm.categoryId) { alert('Please fill Title, Code, and select a Category.'); return; }
+          const minifiedCode = (bookmarkletForm.code || '').replace(/\s+/g, ' ').trim();
+          if (editId) { await firebaseDB.update(`bookmarklets/${editId}`, { ...bookmarkletForm, code: minifiedCode }); alert('Bookmarklet updated'); } else { const pushKey = await firebaseDB.push('bookmarklets', { ...bookmarkletForm, code: minifiedCode }); alert('Bookmarklet added (id: ' + pushKey + ')'); }
+          setBookmarkletForm({ title: '', description: '', code: '', categoryId: '', order: 0, credits: '' }); setEditId(null); await loadData();
+        } catch (err) { console.error(err); alert('Failed to save bookmarklet: ' + (err.message || err)); }
+      }
+      async function handleDeleteBookmarklet(id) { if (!confirm('Delete this bookmarklet?')) return; try { await firebaseDB.delete(`bookmarklets/${id}`); if (editId === id) { setEditId(null); setBookmarkletForm({ title: '', description: '', code: '', categoryId: '', order: 0, credits: '' }); } await loadData(); alert('Bookmarklet deleted'); } catch (err) { console.error(err); alert('Failed to delete bookmarklet: ' + (err.message || err)); } }
+      function startEditBookmarklet(b) { setEditId(b.id); setBookmarkletForm({ title: b.title || '', description: b.description || '', code: b.code || '', categoryId: b.categoryId || '', order: b.order || 0, credits: b.credits || '' }); window.scrollTo({ top: 0, behavior: 'smooth' }); }
+      function cancelEdit() { setEditId(null); setBookmarkletForm({ title: '', description: '', code: '', categoryId: '', order: 0, credits: '' }); }
+
+      async function handleSaveWebsite(e) {
+        e.preventDefault();
+        try {
+          if (!websiteForm.name || !websiteForm.url || !websiteForm.categoryId) { alert('Please fill Name, URL, and select a Category.'); return; }
+          if (editWebsiteId) { 
+            await firebaseDB.update(`websites/${editWebsiteId}`, websiteForm); 
+            alert('Website updated'); 
+          } else { 
+            const pushKey = await firebaseDB.push('websites', websiteForm); 
+            alert('Website added (id: ' + pushKey + ')'); 
+          }
+          setWebsiteForm({ name: '', description: '', url: '', image: '', categoryId: '', order: 0, comingSoon: false }); 
+          setEditWebsiteId(null); 
+          await loadData();
+        } catch (err) { console.error(err); alert('Failed to save website: ' + (err.message || err)); }
+      }
+      async function handleDeleteWebsite(id) { 
+        if (!confirm('Delete this website?')) return; 
+        try { 
+          await firebaseDB.delete(`websites/${id}`); 
+          if (editWebsiteId === id) { 
+            setEditWebsiteId(null); 
+            setWebsiteForm({ name: '', description: '', url: '', image: '', categoryId: '', order: 0, comingSoon: false }); 
+          } 
+          await loadData(); 
+          alert('Website deleted'); 
+        } catch (err) { console.error(err); alert('Failed to delete website: ' + (err.message || err)); } 
+      }
+      function startEditWebsite(w) { 
+        setEditWebsiteId(w.id); 
+        setWebsiteForm({ name: w.name || '', description: w.description || '', url: w.url || '', image: w.image || '', categoryId: w.categoryId || '', order: w.order || 0, comingSoon: w.comingSoon || false }); 
+        window.scrollTo({ top: 0, behavior: 'smooth' }); 
+      }
+      function cancelEditWebsite() { setEditWebsiteId(null); setWebsiteForm({ name: '', description: '', url: '', image: '', categoryId: '', order: 0, comingSoon: false }); }
+
+      if (showLogin) {
+        return (
+          <div className="min-h-screen flex items-center justify-center p-4">
+            <Card className="w-full max-w-md">
+              <CardHeader className="text-center"><Logo size="large" /><CardTitle className="text-2xl mt-4">Admin Login</CardTitle></CardHeader>
+              <CardContent>
+                <form onSubmit={handleLogin} className="space-y-4">
+                  <div><Label>Email</Label><Input type="email" value={email} onChange={(e)=>setEmail(e.target.value)} placeholder="admin@example.com" required autoComplete="email" /></div>
+                  <div><Label>Password</Label><Input type="password" value={password} onChange={(e)=>setPassword(e.target.value)} placeholder="••••••" required autoComplete="current-password" /></div>
+                  {loginError && <div className="bg-red-50 border border-red-200 text-red-700 p-3 rounded">{loginError}</div>}
+                  <Button type="submit" className="w-full bg-orange-500 text-white">Sign In</Button>
+                  <div className="mt-2 text-center"><Link to={createPageUrl('Home')}><Button className="border">Back to Home</Button></Link></div>
+                </form>
+              </CardContent>
+            </Card>
+          </div>
+        );
+      }
+
+      if (loading) {
+        return <div className="min-h-screen flex items-center justify-center"><div className="animate-spin h-10 w-10 border-b-2 rounded-full border-orange-600"></div></div>;
+      }
+
+      return (
+        <div className="min-h-screen">
+          <LogoutModal open={showLogoutConfirm} onConfirm={handleLogout} onCancel={() => setShowLogoutConfirm(false)} />
+          <header className="border-b bg-white p-4 sticky top-0 z-20">
+            <div className="container mx-auto flex justify-between items-center"><Logo /><div className="flex items-center gap-2"><Link to={createPageUrl('Home')}><Button className="border hover:bg-neutral-200 transition">Back to Home</Button></Link>{isAdmin && <Button className="border hover:bg-neutral-200 transition" onClick={handleLogoutConfirm}>Logout</Button>}</div></div>
+          </header>
+          <main className="container mx-auto px-4 py-8">
+            <h1 className="text-3xl font-bold mb-6">Admin Panel</h1>
+            
+            <div className="flex justify-center mb-6">
+              <div className="inline-flex bg-white border border-orange-100 rounded-full p-1 shadow-sm">
+                <button
+                  onClick={() => setAdminTab('bookmarklets')}
+                  className={`px-6 py-2 rounded-full text-sm font-medium transition-all ${
+                    adminTab === 'bookmarklets'
+                      ? 'bg-gradient-to-r from-orange-500 to-orange-600 text-white shadow-md'
+                      : 'text-gray-600 hover:text-orange-600'
+                  }`}
+                >
+                  Bookmarklets
+                </button>
+                <button
+                  onClick={() => setAdminTab('websites')}
+                  className={`px-6 py-2 rounded-full text-sm font-medium transition-all ${
+                    adminTab === 'websites'
+                      ? 'bg-gradient-to-r from-orange-500 to-orange-600 text-white shadow-md'
+                      : 'text-gray-600 hover:text-orange-600'
+                  }`}
+                >
+                  Websites
+                </button>
+              </div>
+            </div>
+
+            {adminTab === 'bookmarklets' ? (
+              <>
+                <section className="mb-8">
+                  <Card className="mb-4">
+                    <CardHeader><CardTitle className="flex items-center gap-2">{editCategoryId ? 'Edit Bookmarklet Category' : 'Add Bookmarklet Category'}</CardTitle></CardHeader>
+                    <CardContent>
+                      <form onSubmit={handleSaveCategory} className="space-y-3">
+                        <div><Label>Category Name</Label><Input value={categoryForm.name} onChange={(e)=>setCategoryForm({...categoryForm, name: e.target.value})} required /></div>
+                        <div><Label>Description</Label><Textarea value={categoryForm.description} onChange={(e)=>setCategoryForm({...categoryForm, description: e.target.value})} rows={3} /></div>
+                        <div><Label>Order</Label><Input type="number" value={categoryForm.order} onChange={(e)=>setCategoryForm({...categoryForm, order: parseInt(e.target.value || '0')})} min="0" /></div>
+                        <div className="flex gap-2"><Button type="submit" className="bg-orange-500 text-white">{editCategoryId ? 'Save Category' : 'Add Category'}</Button>{editCategoryId && <Button type="button" className="border" onClick={cancelEditCategory}>Cancel</Button>}</div>
+                      </form>
+                    </CardContent>
+                  </Card>
+
+                  <Card>
+                    <CardHeader><CardTitle>Bookmarklet Categories ({categories.length})</CardTitle></CardHeader>
+                    <CardContent>
+                      <div className="space-y-3">{categories.length === 0 && <p className="text-gray-500 text-center py-4">No categories yet.</p>}{categories.map(c => (
+                        <div key={c.id} className="flex items-center justify-between p-3 bg-orange-50 rounded border">
+                          <div><div className="font-semibold">{c.name}</div>{c.description && <div className="text-sm text-gray-600">{c.description}</div>}<div className="text-xs text-gray-500">Order: {c.order || 0}</div></div>
+                          <div className="flex gap-2"><Button className="border" onClick={()=>startEditCategory(c)}>Edit</Button><Button className="border" onClick={()=>handleDeleteCategory(c.id)}>Delete</Button></div>
+                        </div>
+                      ))}</div>
+                    </CardContent>
+                  </Card>
+                </section>
+
+                <section>
+                  <Card className="mb-4">
+                    <CardHeader><CardTitle>{editId ? 'Edit Bookmarklet' : 'Add New Bookmarklet'}</CardTitle></CardHeader>
+                    <CardContent>
+                      <form onSubmit={handleSaveBookmarklet} className="space-y-3">
+                        <div><Label>Title</Label><Input value={bookmarkletForm.title} onChange={(e)=>setBookmarkletForm({...bookmarkletForm, title: e.target.value})} required /></div>
+                        <div><Label>Description</Label><Textarea value={bookmarkletForm.description} onChange={(e)=>setBookmarkletForm({...bookmarkletForm, description: e.target.value})} rows={2} /></div>
+                        <div><Label>Code (javascript:...)</Label><Textarea value={bookmarkletForm.code} onChange={(e)=>setBookmarkletForm({...bookmarkletForm, code: e.target.value})} rows={5} className="font-mono text-sm" required /></div>
+                        <div><Label>Credits URL (optional)</Label><Input value={bookmarkletForm.credits} onChange={(e)=>setBookmarkletForm({...bookmarkletForm, credits: e.target.value})} placeholder="https://github.com/author" type="url" /></div>
+                        <div><Label>Category</Label><select value={bookmarkletForm.categoryId} onChange={(e)=>setBookmarkletForm({...bookmarkletForm, categoryId: e.target.value})} className="w-full border rounded px-3 py-2"><option value="">Select a category</option>{categories.map(cat => <option key={cat.id} value={cat.id}>{cat.name}</option>)}</select></div>
+                        <div><Label>Order</Label><Input type="number" value={bookmarkletForm.order} onChange={(e)=>setBookmarkletForm({...bookmarkletForm, order: parseInt(e.target.value || '0')})} /></div>
+                        <div className="flex gap-2"><Button type="submit" className="bg-orange-500 text-white">{editId ? 'Save Changes' : 'Add Bookmarklet'}</Button>{editId && <Button type="button" className="border" onClick={cancelEdit}>Cancel</Button>}</div>
+                      </form>
+                    </CardContent>
+                  </Card>
+
+                  <Card>
+                    <CardHeader><CardTitle>Existing Bookmarklets ({bookmarklets.length})</CardTitle></CardHeader>
+                    <CardContent>
+                      <div className="space-y-3">{bookmarklets.length === 0 && <p className="text-gray-500 text-center py-4">No bookmarklets yet.</p>}{bookmarklets.map(b => (
+                        <div key={b.id} className="flex items-start justify-between p-3 bg-orange-50 rounded border">
+                          <div className="flex-1"><div className="font-semibold">{b.title}</div>{b.description && <div className="text-sm text-gray-600">{b.description}</div>}<pre className="mt-2 p-2 bg-gray-100 rounded text-xs font-mono overflow-x-auto">{(b.code || '').substring(0, 200)}</pre><div className="text-xs text-gray-500 mt-1">Order: {b.order || 0} | Category: {categories.find(c=>c.id===b.categoryId)?.name || 'Unknown'}</div></div>
+                          <div className="ml-4 flex flex-col gap-2"><Button className="border" onClick={()=>startEditBookmarklet(b)}>Edit</Button><Button className="border" onClick={()=>handleDeleteBookmarklet(b.id)}>Delete</Button></div>
+                        </div>
+                      ))}</div>
+                    </CardContent>
+                  </Card>
+                </section>
+              </>
+            ) : (
+              <>
+                <section className="mb-8">
+                  <Card className="mb-4">
+                    <CardHeader><CardTitle className="flex items-center gap-2">{editWebCategoryId ? 'Edit Website Category' : 'Add Website Category'}</CardTitle></CardHeader>
+                    <CardContent>
+                      <form onSubmit={handleSaveWebCategory} className="space-y-3">
+                        <div><Label>Category Name</Label><Input value={webCategoryForm.name} onChange={(e)=>setWebCategoryForm({...webCategoryForm, name: e.target.value})} required /></div>
+                        <div><Label>Description</Label><Textarea value={webCategoryForm.description} onChange={(e)=>setWebCategoryForm({...webCategoryForm, description: e.target.value})} rows={3} /></div>
+                        <div><Label>Order</Label><Input type="number" value={webCategoryForm.order} onChange={(e)=>setWebCategoryForm({...webCategoryForm, order: parseInt(e.target.value || '0')})} min="0" /></div>
+                        <div className="flex gap-2"><Button type="submit" className="bg-orange-500 text-white">{editWebCategoryId ? 'Save Category' : 'Add Category'}</Button>{editWebCategoryId && <Button type="button" className="border" onClick={cancelEditWebCategory}>Cancel</Button>}</div>
+                      </form>
+                    </CardContent>
+                  </Card>
+
+                  <Card>
+                    <CardHeader><CardTitle>Website Categories ({websiteCategories.length})</CardTitle></CardHeader>
+                    <CardContent>
+                      <div className="space-y-3">{websiteCategories.length === 0 && <p className="text-gray-500 text-center py-4">No website categories yet.</p>}{websiteCategories.map(c => (
+                        <div key={c.id} className="flex items-center justify-between p-3 bg-orange-50 rounded border">
+                          <div><div className="font-semibold">{c.name}</div>{c.description && <div className="text-sm text-gray-600">{c.description}</div>}<div className="text-xs text-gray-500">Order: {c.order || 0}</div></div>
+                          <div className="flex gap-2"><Button className="border" onClick={()=>startEditWebCategory(c)}>Edit</Button><Button className="border" onClick={()=>handleDeleteWebCategory(c.id)}>Delete</Button></div>
+                        </div>
+                      ))}</div>
+                    </CardContent>
+                  </Card>
+                </section>
+
+                <section>
+                  <Card className="mb-4">
+                    <CardHeader><CardTitle>{editWebsiteId ? 'Edit Website' : 'Add New Website'}</CardTitle></CardHeader>
+                    <CardContent>
+                      <form onSubmit={handleSaveWebsite} className="space-y-3">
+                        <div><Label>Name</Label><Input value={websiteForm.name} onChange={(e)=>setWebsiteForm({...websiteForm, name: e.target.value})} required placeholder="Website Name" /></div>
+                        <div><Label>Description</Label><Textarea value={websiteForm.description} onChange={(e)=>setWebsiteForm({...websiteForm, description: e.target.value})} rows={2} placeholder="Brief description of the website" /></div>
+                        <div><Label>URL</Label><Input value={websiteForm.url} onChange={(e)=>setWebsiteForm({...websiteForm, url: e.target.value})} required placeholder="https://example.com" type="url" /></div>
+                        <div><Label>Image URL (optional)</Label><Input value={websiteForm.image} onChange={(e)=>setWebsiteForm({...websiteForm, image: e.target.value})} placeholder="https://example.com/image.png" /></div>
+                        <div><Label>Category</Label><select value={websiteForm.categoryId} onChange={(e)=>setWebsiteForm({...websiteForm, categoryId: e.target.value})} className="w-full border rounded px-3 py-2"><option value="">Select a category</option>{websiteCategories.map(cat => <option key={cat.id} value={cat.id}>{cat.name}</option>)}</select></div>
+                        <div><Label>Order</Label><Input type="number" value={websiteForm.order} onChange={(e)=>setWebsiteForm({...websiteForm, order: parseInt(e.target.value || '0')})} /></div>
+                        <div className="flex items-center gap-2"><input type="checkbox" id="comingSoon" checked={websiteForm.comingSoon} onChange={(e)=>setWebsiteForm({...websiteForm, comingSoon: e.target.checked})} className="w-4 h-4 accent-orange-500" /><label htmlFor="comingSoon" className="text-sm text-gray-700">Coming Soon</label></div>
+                        <div className="flex gap-2"><Button type="submit" className="bg-orange-500 text-white">{editWebsiteId ? 'Save Changes' : 'Add Website'}</Button>{editWebsiteId && <Button type="button" className="border" onClick={cancelEditWebsite}>Cancel</Button>}</div>
+                      </form>
+                    </CardContent>
+                  </Card>
+
+                  <Card>
+                    <CardHeader><CardTitle>Existing Websites ({websites.length})</CardTitle></CardHeader>
+                    <CardContent>
+                      <div className="space-y-3">{websites.length === 0 && <p className="text-gray-500 text-center py-4">No websites yet.</p>}{websites.map(w => (
+                        <div key={w.id} className="flex items-start justify-between p-3 bg-orange-50 rounded border">
+                          <div className="flex-1 flex gap-3">
+                            {w.image && <img src={w.image} alt={w.name} className="w-16 h-16 object-cover rounded" onError={(e) => { e.target.style.display = 'none'; }} />}
+                            <div>
+                              <div className="font-semibold">{w.name}</div>
+                              {w.description && <div className="text-sm text-gray-600">{w.description}</div>}
+                              <div className="text-xs text-orange-500 mt-1">{w.url}</div>
+                              <div className="text-xs text-gray-500 mt-1">Order: {w.order || 0} | Category: {websiteCategories.find(c=>c.id===w.categoryId)?.name || 'Unknown'}</div>
+                            </div>
+                          </div>
+                          <div className="ml-4 flex flex-col gap-2"><Button className="border" onClick={()=>startEditWebsite(w)}>Edit</Button><Button className="border" onClick={()=>handleDeleteWebsite(w.id)}>Delete</Button></div>
+                        </div>
+                      ))}</div>
+                    </CardContent>
+                  </Card>
+                </section>
+              </>
+            )}
+
+          </main>
+        </div>
+      );
+    }
+
+    function createPageUrl(name) {
+      if (name.toLowerCase() === 'home') return '#/';
+      if (name.toLowerCase() === 'admin') return '#/admin';
+      return '#/';
+    }
+
+    function TermsPage() {
+      useEffect(() => { window.scrollTo(0, 0); }, []);
+      return (
+        <div className="min-h-screen bg-gray-50">
+          <header className="sticky top-0 bg-white/80 backdrop-blur-md shadow-sm z-40 border-b">
+            <div className="container mx-auto px-4 h-16 flex items-center justify-between">
+              <a href="#/" className="flex items-center gap-3 hover:opacity-80 transition">
+                <img src="/logo.png" alt="Seltra" className="h-9 w-auto" />
+                <span className="text-xl font-bold text-gray-900">Seltra</span>
+              </a>
+              <a href="#/" className="text-orange-600 hover:text-orange-700 font-medium">← Back to Home</a>
+            </div>
+          </header>
+          <main className="container mx-auto px-4 py-12 max-w-4xl">
+            <h1 className="text-4xl font-bold text-gray-900 mb-2">Terms of Service</h1>
+            <p className="text-gray-500 mb-8">Last updated: {new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}</p>
+            
+            <div className="prose prose-gray max-w-none space-y-8">
+              <section className="bg-white p-6 rounded-xl shadow-sm border">
+                <h2 className="text-xl font-bold text-gray-900 mb-3">1. Acceptance of Terms</h2>
+                <p className="text-gray-700 leading-relaxed">By accessing and using Seltra ("Service"), you accept and agree to be bound by the terms and provision of this agreement. If you do not agree to abide by these terms, please do not use this Service. These Terms constitute a legally binding agreement between you and Seltra.</p>
+              </section>
+
+              <section className="bg-white p-6 rounded-xl shadow-sm border">
+                <h2 className="text-xl font-bold text-gray-900 mb-3">2. Description of Service</h2>
+                <p className="text-gray-700 leading-relaxed mb-3">Seltra provides a platform for discovering, sharing, and generating bookmarklets and useful websites. Our services include:</p>
+                <ul className="list-disc list-inside text-gray-700 space-y-1">
+                  <li>A curated collection of bookmarklets</li>
+                  <li>A directory of useful websites</li>
+                  <li>An AI-powered bookmarklet generator</li>
+                  <li>Community features for sharing and feedback</li>
+                </ul>
+              </section>
+
+              <section className="bg-white p-6 rounded-xl shadow-sm border">
+                <h2 className="text-xl font-bold text-gray-900 mb-3">3. User Responsibilities & Conduct</h2>
+                <p className="text-gray-700 leading-relaxed mb-3">You agree to use the Service responsibly and in compliance with all applicable laws. You shall NOT:</p>
+                <ul className="list-disc list-inside text-gray-700 space-y-1">
+                  <li>Use bookmarklets to violate any website's terms of service</li>
+                  <li>Attempt to gain unauthorized access to any system or data</li>
+                  <li>Use the Service for any illegal, harmful, or malicious purpose</li>
+                  <li>Distribute malware, viruses, or harmful code</li>
+                  <li>Engage in any activity that disrupts or interferes with the Service</li>
+                  <li>Use automated systems to abuse the AI generator</li>
+                  <li>Circumvent any security measures or access restrictions</li>
+                </ul>
+              </section>
+
+              <section className="bg-white p-6 rounded-xl shadow-sm border">
+                <h2 className="text-xl font-bold text-gray-900 mb-3">4. Disclaimer of Warranties</h2>
+                <p className="text-gray-700 leading-relaxed mb-3"><strong>THE SERVICE IS PROVIDED "AS IS" AND "AS AVAILABLE" WITHOUT ANY WARRANTIES OF ANY KIND, EXPRESS OR IMPLIED.</strong></p>
+                <p className="text-gray-700 leading-relaxed mb-3">Seltra makes no warranties regarding:</p>
+                <ul className="list-disc list-inside text-gray-700 space-y-1">
+                  <li>The accuracy, completeness, or reliability of any content</li>
+                  <li>The functionality or security of any bookmarklet</li>
+                  <li>The safety or accuracy of linked third-party websites</li>
+                  <li>The output quality or correctness of the AI generator</li>
+                  <li>Uninterrupted or error-free service availability</li>
+                </ul>
+              </section>
+
+              <section className="bg-white p-6 rounded-xl shadow-sm border border-red-200 bg-red-50">
+                <h2 className="text-xl font-bold text-red-800 mb-3">5. Limitation of Liability</h2>
+                <p className="text-red-700 leading-relaxed mb-3"><strong>TO THE MAXIMUM EXTENT PERMITTED BY LAW, SELTRA AND ITS OPERATORS SHALL NOT BE LIABLE FOR ANY INDIRECT, INCIDENTAL, SPECIAL, CONSEQUENTIAL, OR PUNITIVE DAMAGES, OR ANY LOSS OF PROFITS OR REVENUES, WHETHER INCURRED DIRECTLY OR INDIRECTLY, OR ANY LOSS OF DATA, USE, GOODWILL, OR OTHER INTANGIBLE LOSSES.</strong></p>
+                <p className="text-red-700 leading-relaxed">This includes, but is not limited to, damages arising from: your use or inability to use the Service; any unauthorized access to your data; any third-party conduct on the Service; any content obtained from the Service; or any bugs, viruses, or other harmful code that may be transmitted through the Service.</p>
+              </section>
+
+              <section className="bg-white p-6 rounded-xl shadow-sm border">
+                <h2 className="text-xl font-bold text-gray-900 mb-3">6. User-Generated Content & AI Output</h2>
+                <p className="text-gray-700 leading-relaxed mb-3">Regarding bookmarklets and AI-generated code:</p>
+                <ul className="list-disc list-inside text-gray-700 space-y-1">
+                  <li><strong>You are solely responsible</strong> for any code you execute on your browser</li>
+                  <li>AI-generated bookmarklets are provided without any guarantee of correctness or safety</li>
+                  <li>You should review and understand any code before executing it</li>
+                  <li>Seltra is not responsible for any damage caused by executing bookmarklets</li>
+                  <li>User-submitted content may be removed at our sole discretion</li>
+                </ul>
+              </section>
+
+              <section className="bg-white p-6 rounded-xl shadow-sm border">
+                <h2 className="text-xl font-bold text-gray-900 mb-3">7. Third-Party Links & Websites</h2>
+                <p className="text-gray-700 leading-relaxed">The Service may contain links to third-party websites. Seltra has no control over, and assumes no responsibility for, the content, privacy policies, or practices of any third-party sites. You acknowledge and agree that Seltra shall not be responsible for any damage or loss caused by your use of any third-party website or service.</p>
+              </section>
+
+              <section className="bg-white p-6 rounded-xl shadow-sm border">
+                <h2 className="text-xl font-bold text-gray-900 mb-3">8. Indemnification</h2>
+                <p className="text-gray-700 leading-relaxed">You agree to indemnify, defend, and hold harmless Seltra, its operators, affiliates, and their respective officers, directors, employees, and agents from and against any claims, liabilities, damages, losses, and expenses, including reasonable legal fees, arising out of or in any way connected with your access to or use of the Service, your violation of these Terms, or your violation of any third-party rights.</p>
+              </section>
+
+              <section className="bg-white p-6 rounded-xl shadow-sm border">
+                <h2 className="text-xl font-bold text-gray-900 mb-3">9. Modifications to Terms</h2>
+                <p className="text-gray-700 leading-relaxed">We reserve the right to modify these Terms at any time. We will provide notice of significant changes by updating the "Last updated" date. Your continued use of the Service after any modification constitutes acceptance of the new Terms.</p>
+              </section>
+
+              <section className="bg-white p-6 rounded-xl shadow-sm border">
+                <h2 className="text-xl font-bold text-gray-900 mb-3">10. Termination</h2>
+                <p className="text-gray-700 leading-relaxed">We reserve the right to terminate or suspend access to the Service immediately, without prior notice, for any reason whatsoever, including breach of these Terms. All provisions of the Terms which by their nature should survive termination shall survive.</p>
+              </section>
+
+              <section className="bg-white p-6 rounded-xl shadow-sm border">
+                <h2 className="text-xl font-bold text-gray-900 mb-3">11. Governing Law</h2>
+                <p className="text-gray-700 leading-relaxed">These Terms shall be governed by and construed in accordance with applicable laws, without regard to conflict of law principles. Any disputes arising from these Terms shall be resolved through binding arbitration.</p>
+              </section>
+
+              <section className="bg-white p-6 rounded-xl shadow-sm border">
+                <h2 className="text-xl font-bold text-gray-900 mb-3">12. Contact</h2>
+                <p className="text-gray-700 leading-relaxed">For questions about these Terms, please contact us through our <a href="https://github.com/mojhehh/seltra/issues" className="text-orange-600 hover:underline" target="_blank" rel="noopener noreferrer">GitHub Issues</a> page.</p>
+              </section>
+            </div>
+          </main>
+          <footer className="border-t bg-white py-6 mt-12">
+            <div className="container mx-auto px-4 text-center text-gray-500 text-sm">
+              <p>© {new Date().getFullYear()} Seltra. All rights reserved.</p>
+            </div>
+          </footer>
+        </div>
+      );
+    }
+
+    function PrivacyPage() {
+      useEffect(() => { window.scrollTo(0, 0); }, []);
+      return (
+        <div className="min-h-screen bg-gray-50">
+          <header className="sticky top-0 bg-white/80 backdrop-blur-md shadow-sm z-40 border-b">
+            <div className="container mx-auto px-4 h-16 flex items-center justify-between">
+              <a href="#/" className="flex items-center gap-3 hover:opacity-80 transition">
+                <img src="/logo.png" alt="Seltra" className="h-9 w-auto" />
+                <span className="text-xl font-bold text-gray-900">Seltra</span>
+              </a>
+              <a href="#/" className="text-orange-600 hover:text-orange-700 font-medium">← Back to Home</a>
+            </div>
+          </header>
+          <main className="container mx-auto px-4 py-12 max-w-4xl">
+            <h1 className="text-4xl font-bold text-gray-900 mb-2">Privacy Policy</h1>
+            <p className="text-gray-500 mb-8">Last updated: {new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}</p>
+            
+            <div className="prose prose-gray max-w-none space-y-8">
+              <section className="bg-white p-6 rounded-xl shadow-sm border">
+                <h2 className="text-xl font-bold text-gray-900 mb-3">1. Introduction</h2>
+                <p className="text-gray-700 leading-relaxed">Seltra ("we", "our", or "us") is committed to protecting your privacy. This Privacy Policy explains how we collect, use, and safeguard your information when you use our Service.</p>
+              </section>
+
+              <section className="bg-white p-6 rounded-xl shadow-sm border">
+                <h2 className="text-xl font-bold text-gray-900 mb-3">2. Information We Collect</h2>
+                <p className="text-gray-700 leading-relaxed mb-3"><strong>Information we may collect includes:</strong></p>
+                <ul className="list-disc list-inside text-gray-700 space-y-2">
+                  <li><strong>Usage Data:</strong> Anonymous analytics data such as pages visited, time spent, and browser type</li>
+                  <li><strong>AI Prompts:</strong> Prompts submitted to the AI generator are processed but not permanently stored with identifiers</li>
+                  <li><strong>Cookies:</strong> We may use cookies for essential functionality and analytics</li>
+                </ul>
+                <p className="text-gray-700 leading-relaxed mt-3"><strong>Information we do NOT collect:</strong></p>
+                <ul className="list-disc list-inside text-gray-700 space-y-1">
+                  <li>Personal identification information (unless you contact us voluntarily)</li>
+                  <li>Financial or payment information</li>
+                  <li>Location data</li>
+                  <li>Device identifiers beyond standard analytics</li>
+                </ul>
+              </section>
+
+              <section className="bg-white p-6 rounded-xl shadow-sm border">
+                <h2 className="text-xl font-bold text-gray-900 mb-3">3. How We Use Your Information</h2>
+                <p className="text-gray-700 leading-relaxed mb-3">We use collected information to:</p>
+                <ul className="list-disc list-inside text-gray-700 space-y-1">
+                  <li>Provide and maintain the Service</li>
+                  <li>Improve user experience and site functionality</li>
+                  <li>Generate AI-powered bookmarklets based on your prompts</li>
+                  <li>Analyze usage patterns to improve our content</li>
+                  <li>Detect and prevent abuse of the Service</li>
+                </ul>
+              </section>
+
+              <section className="bg-white p-6 rounded-xl shadow-sm border">
+                <h2 className="text-xl font-bold text-gray-900 mb-3">4. Data Sharing & Third Parties</h2>
+                <p className="text-gray-700 leading-relaxed mb-3">We may share data with:</p>
+                <ul className="list-disc list-inside text-gray-700 space-y-2">
+                  <li><strong>Firebase (Google):</strong> For database hosting and authentication</li>
+                  <li><strong>Cloudflare:</strong> For content delivery and security</li>
+                  <li><strong>AI Service Providers:</strong> Your prompts are sent to AI APIs for generation</li>
+                  <li><strong>Analytics Providers:</strong> Anonymous usage statistics</li>
+                </ul>
+                <p className="text-gray-700 leading-relaxed mt-3">We do NOT sell your personal information to third parties.</p>
+              </section>
+
+              <section className="bg-white p-6 rounded-xl shadow-sm border">
+                <h2 className="text-xl font-bold text-gray-900 mb-3">5. Data Security</h2>
+                <p className="text-gray-700 leading-relaxed">We implement industry-standard security measures to protect your data. However, no method of transmission over the Internet is 100% secure. We cannot guarantee absolute security of data transmitted to our Service.</p>
+              </section>
+
+              <section className="bg-white p-6 rounded-xl shadow-sm border">
+                <h2 className="text-xl font-bold text-gray-900 mb-3">6. Your Rights</h2>
+                <p className="text-gray-700 leading-relaxed mb-3">Depending on your jurisdiction, you may have the right to:</p>
+                <ul className="list-disc list-inside text-gray-700 space-y-1">
+                  <li>Access information we hold about you</li>
+                  <li>Request deletion of your data</li>
+                  <li>Opt out of analytics tracking</li>
+                  <li>Lodge a complaint with a supervisory authority</li>
+                </ul>
+              </section>
+
+              <section className="bg-white p-6 rounded-xl shadow-sm border">
+                <h2 className="text-xl font-bold text-gray-900 mb-3">7. Children's Privacy</h2>
+                <p className="text-gray-700 leading-relaxed">Our Service is not directed to children under 13. We do not knowingly collect personal information from children. If you believe a child has provided us with personal information, please contact us.</p>
+              </section>
+
+              <section className="bg-white p-6 rounded-xl shadow-sm border">
+                <h2 className="text-xl font-bold text-gray-900 mb-3">8. Changes to This Policy</h2>
+                <p className="text-gray-700 leading-relaxed">We may update this Privacy Policy from time to time. We will notify you of any changes by posting the new policy on this page and updating the "Last updated" date.</p>
+              </section>
+
+              <section className="bg-white p-6 rounded-xl shadow-sm border">
+                <h2 className="text-xl font-bold text-gray-900 mb-3">9. Contact Us</h2>
+                <p className="text-gray-700 leading-relaxed">For questions about this Privacy Policy, please contact us through our <a href="https://github.com/mojhehh/seltra/issues" className="text-orange-600 hover:underline" target="_blank" rel="noopener noreferrer">GitHub Issues</a> page.</p>
+              </section>
+            </div>
+          </main>
+          <footer className="border-t bg-white py-6 mt-12">
+            <div className="container mx-auto px-4 text-center text-gray-500 text-sm">
+              <p>© {new Date().getFullYear()} Seltra. All rights reserved.</p>
+            </div>
+          </footer>
+        </div>
+      );
+    }
+
+    function CopyrightPage() {
+      useEffect(() => { window.scrollTo(0, 0); }, []);
+      return (
+        <div className="min-h-screen bg-gray-50">
+          <header className="sticky top-0 bg-white/80 backdrop-blur-md shadow-sm z-40 border-b">
+            <div className="container mx-auto px-4 h-16 flex items-center justify-between">
+              <a href="#/" className="flex items-center gap-3 hover:opacity-80 transition">
+                <img src="/logo.png" alt="Seltra" className="h-9 w-auto" />
+                <span className="text-xl font-bold text-gray-900">Seltra</span>
+              </a>
+              <a href="#/" className="text-orange-600 hover:text-orange-700 font-medium">← Back to Home</a>
+            </div>
+          </header>
+          <main className="container mx-auto px-4 py-12 max-w-4xl">
+            <h1 className="text-4xl font-bold text-gray-900 mb-2">Copyright & DMCA Policy</h1>
+            <p className="text-gray-500 mb-8">Last updated: {new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}</p>
+            
+            <div className="prose prose-gray max-w-none space-y-8">
+              <section className="bg-white p-6 rounded-xl shadow-sm border">
+                <h2 className="text-xl font-bold text-gray-900 mb-3">1. Copyright Notice</h2>
+                <p className="text-gray-700 leading-relaxed">© {new Date().getFullYear()} Seltra. All rights reserved. The Seltra name, logo, and original content are protected by copyright and other intellectual property laws.</p>
+              </section>
+
+              <section className="bg-white p-6 rounded-xl shadow-sm border">
+                <h2 className="text-xl font-bold text-gray-900 mb-3">2. User-Submitted Content</h2>
+                <p className="text-gray-700 leading-relaxed mb-3">Bookmarklets and other code shared on Seltra may be subject to various licenses. By submitting content to Seltra, you represent that:</p>
+                <ul className="list-disc list-inside text-gray-700 space-y-1">
+                  <li>You own the rights to the content or have permission to share it</li>
+                  <li>The content does not infringe on any third-party intellectual property rights</li>
+                  <li>You grant Seltra a non-exclusive license to display and distribute the content</li>
+                </ul>
+              </section>
+
+              <section className="bg-white p-6 rounded-xl shadow-sm border border-blue-200 bg-blue-50">
+                <h2 className="text-xl font-bold text-blue-800 mb-3">3. DMCA Takedown Procedure</h2>
+                <p className="text-blue-700 leading-relaxed mb-3">Seltra respects the intellectual property rights of others. If you believe that content on our Service infringes your copyright, please submit a DMCA takedown notice containing:</p>
+                <ol className="list-decimal list-inside text-blue-700 space-y-2">
+                  <li>A physical or electronic signature of the copyright owner or authorized agent</li>
+                  <li>Identification of the copyrighted work claimed to have been infringed</li>
+                  <li>Identification of the infringing material and its location on our Service</li>
+                  <li>Your contact information (address, phone number, email)</li>
+                  <li>A statement that you have a good faith belief that the use is not authorized</li>
+                  <li>A statement, under penalty of perjury, that the information in the notice is accurate and you are authorized to act on behalf of the copyright owner</li>
+                </ol>
+              </section>
+
+              <section className="bg-white p-6 rounded-xl shadow-sm border">
+                <h2 className="text-xl font-bold text-gray-900 mb-3">4. Counter-Notification</h2>
+                <p className="text-gray-700 leading-relaxed mb-3">If you believe your content was wrongly removed, you may submit a counter-notification containing:</p>
+                <ol className="list-decimal list-inside text-gray-700 space-y-1">
+                  <li>Your physical or electronic signature</li>
+                  <li>Identification of the removed material and its former location</li>
+                  <li>A statement under penalty of perjury that you believe the material was removed by mistake</li>
+                  <li>Your name, address, phone number, and consent to jurisdiction</li>
+                </ol>
+              </section>
+
+              <section className="bg-white p-6 rounded-xl shadow-sm border">
+                <h2 className="text-xl font-bold text-gray-900 mb-3">5. Repeat Infringers</h2>
+                <p className="text-gray-700 leading-relaxed">We will terminate access for users who are determined to be repeat infringers in appropriate circumstances.</p>
+              </section>
+
+              <section className="bg-white p-6 rounded-xl shadow-sm border">
+                <h2 className="text-xl font-bold text-gray-900 mb-3">6. Fair Use</h2>
+                <p className="text-gray-700 leading-relaxed">Seltra respects fair use principles. Many bookmarklets operate on publicly accessible web content for personal, non-commercial purposes. However, users are responsible for ensuring their use of bookmarklets complies with applicable laws.</p>
+              </section>
+
+              <section className="bg-white p-6 rounded-xl shadow-sm border">
+                <h2 className="text-xl font-bold text-gray-900 mb-3">7. Contact for Copyright Issues</h2>
+                <p className="text-gray-700 leading-relaxed">To submit a DMCA notice or for copyright-related inquiries, please contact us through our <a href="https://github.com/mojhehh/seltra/issues/new?labels=dmca,copyright&title=DMCA%20Notice" className="text-orange-600 hover:underline" target="_blank" rel="noopener noreferrer">GitHub Issues</a> page with the label "DMCA".</p>
+              </section>
+            </div>
+          </main>
+          <footer className="border-t bg-white py-6 mt-12">
+            <div className="container mx-auto px-4 text-center text-gray-500 text-sm">
+              <p>© {new Date().getFullYear()} Seltra. All rights reserved.</p>
+            </div>
+          </footer>
+        </div>
+      );
+    }
+
+    function AppRouter() {
+      const [route, setRoute] = useState(window.location.hash || '#/');
+      useEffect(() => { const onHash = () => setRoute(window.location.hash || '#/'); window.addEventListener('hashchange', onHash); return () => window.removeEventListener('hashchange', onHash); }, []);
+      if (route.startsWith('#/admin')) return <AdminPage />;
+      if (route === '#/terms') return <TermsPage />;
+      if (route === '#/privacy') return <PrivacyPage />;
+      if (route === '#/copyright') return <CopyrightPage />;
+      return <Home key="home-page" />;
+    }
+
+    ReactDOM.createRoot(document.getElementById('root')).render(
+      <ErrorBoundary>
+        <AppRouter />
+      </ErrorBoundary>
+    );
+  </script>
+</body>
+
+</html>
