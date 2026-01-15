@@ -246,13 +246,28 @@ CONVERSATION STYLE:
 				const reply = data.choices?.[0]?.message?.content?.trim() || '';
 				
 				// Check if the reply contains bookmarklet code
-				const codeMatch = reply.match(/```(?:javascript|js)?\s*(javascript:\s*[\s\S]*?)```/i);
-				const hasCode = codeMatch !== null;
+				let codeMatch = reply.match(/```(?:javascript|js)?\s*(javascript:\s*[\s\S]*?)```/i);
 				let extractedCode = '';
 				
-				if (hasCode && codeMatch) {
+				if (codeMatch) {
 					extractedCode = codeMatch[1].replace(/\n/g, ' ').replace(/\s+/g, ' ').trim();
+				} else {
+					// Try to find any code block and wrap it as bookmarklet
+					const anyCodeMatch = reply.match(/```(?:javascript|js)?\s*([\s\S]*?)```/i);
+					if (anyCodeMatch) {
+						let code = anyCodeMatch[1].trim();
+						// Minify: remove newlines and collapse spaces
+						code = code.replace(/\n/g, ' ').replace(/\s+/g, ' ').trim();
+						// Wrap in bookmarklet format if not already
+						if (!code.startsWith('javascript:')) {
+							extractedCode = `javascript:(function(){${code}})();`;
+						} else {
+							extractedCode = code;
+						}
+					}
 				}
+				
+				const hasCode = extractedCode.length > 0;
 				
 				// Generate title if requested
 				let title = undefined;
