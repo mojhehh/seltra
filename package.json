@@ -3,13 +3,18 @@
   "version": "1.0.0",
   "type": "module",
   "scripts": {
+    "extract": "node extract-jsx.js",
+    "compile": "node build.js",
+    "build": "node extract-jsx.js && node build.js",
+    "build:prod": "node extract-jsx.js && node build.js --minify",
+    "serve": "npx serve dist -p 3333",
     "dev": "vite",
-    "build": "vite build",
     "preview": "vite preview"
   },
   "devDependencies": {
-    "vite": "^5.0.0",
-    "@vitejs/plugin-react": "^4.2.0"
+    "@vitejs/plugin-react": "^4.2.0",
+    "esbuild": "^0.20.2",
+    "vite": "^5.0.0"
   },
   "dependencies": {
     "react": "^18.2.0",
