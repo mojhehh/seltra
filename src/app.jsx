@@ -761,13 +761,14 @@
           
           setMyRequests(myFeedback);
           
-          // Update selected request if we're in chat view
-          if (selectedRequest) {
-            const updated = myFeedback.find(f => f.id === selectedRequest.id);
-            if (updated) {
-              setSelectedRequest(updated);
+          // Update selected request if we're in chat view - use functional update to get fresh state
+          setSelectedRequest(prev => {
+            if (prev) {
+              const updated = myFeedback.find(f => f.id === prev.id);
+              return updated || prev;
             }
-          }
+            return prev;
+          });
           
           // Count unread updates
           const unread = myFeedback.filter(f => {
@@ -1527,11 +1528,13 @@
         let isMounted = true;
         let popupTimerId = null;
         const userId = getOrCreateUserId();
-        const lastViewed = parseInt(localStorage.getItem('seltra_requests_viewed') || '0');
         
         const unsub = firebaseDB.listen('feedback', (data) => {
           if (!isMounted) return;
           if (!data) { setUnreadUpdates(0); return; }
+          
+          // Get fresh lastViewed time on each update
+          const lastViewed = parseInt(localStorage.getItem('seltra_requests_viewed') || '0');
           
           const myFeedback = Object.keys(data)
             .map(k => ({ id: k, ...data[k] }))
@@ -1815,6 +1818,7 @@
       const [bookmarklets, setBookmarklets] = useState([]);
       const [websites, setWebsites] = useState([]);
       const [feedback, setFeedback] = useState([]);
+      const [unreadUserMessages, setUnreadUserMessages] = useState(0);
       const [loading, setLoading] = useState(true);
       const [showLogin, setShowLogin] = useState(false);
       const [email, setEmail] = useState('');
@@ -1830,6 +1834,14 @@
       const [editWebsiteId, setEditWebsiteId] = useState(null);
       const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
       const [adminTab, setAdminTab] = useState('bookmarklets');
+
+      // Helper to track when admin last viewed feedback
+      const getAdminLastViewed = () => {
+        try { return parseInt(localStorage.getItem('seltra_admin_feedback_viewed') || '0'); } catch { return 0; }
+      };
+      const markAdminFeedbackViewed = () => {
+        try { localStorage.setItem('seltra_admin_feedback_viewed', Date.now().toString()); setUnreadUserMessages(0); } catch {}
+      };
 
       // Refs to hold unsubscribe functions for real-time listeners
       const listenersRef = React.useRef([]);
@@ -1861,7 +1873,20 @@
           });
           const offFeedback = firebaseDB.listen('feedback', (data) => {
             if (!isMounted) return;
-            if (data) { const arr = Object.keys(data).map(k => ({ id:k, ...data[k] })); arr.sort((a,b)=>(b.createdAt||0)-(a.createdAt||0)); setFeedback(arr); } else setFeedback([]);
+            if (data) { 
+              const arr = Object.keys(data).map(k => ({ id:k, ...data[k] })); 
+              arr.sort((a,b)=>(b.createdAt||0)-(a.createdAt||0)); 
+              setFeedback(arr);
+              // Count unread user messages
+              const adminLastViewed = getAdminLastViewed();
+              const unreadCount = arr.filter(f => 
+                f.messages && f.messages.some(m => m.from === 'user' && m.timestamp > adminLastViewed)
+              ).length;
+              setUnreadUserMessages(unreadCount);
+            } else { 
+              setFeedback([]); 
+              setUnreadUserMessages(0);
+            }
           });
           
           listenersRef.current = [offCats, offWebCats, offMarks, offSites, offFeedback];
@@ -2127,7 +2152,7 @@
                   Websites
                 </button>
                 <button
-                  onClick={() => setAdminTab('feedback')}
+                  onClick={() => { setAdminTab('feedback'); markAdminFeedbackViewed(); }}
                   className={`px-6 py-2 rounded-full text-sm font-medium transition-all relative ${
                     adminTab === 'feedback'
                       ? 'bg-gradient-to-r from-orange-500 to-orange-600 text-white shadow-md'
@@ -2135,8 +2160,8 @@
                   }`}
                 >
                   Feedback
-                  {feedback.filter(f => f.status === 'new').length > 0 && (
-                    <span className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 text-white text-xs rounded-full flex items-center justify-center">{feedback.filter(f => f.status === 'new').length}</span>
+                  {(feedback.filter(f => f.status === 'new').length + unreadUserMessages) > 0 && (
+                    <span className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 text-white text-xs rounded-full flex items-center justify-center">{feedback.filter(f => f.status === 'new').length + unreadUserMessages}</span>
                   )}
                 </button>
               </div>
