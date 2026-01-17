@@ -389,13 +389,19 @@
     if (!window.firebase.apps?.length) {
       try { firebase.initializeApp(firebaseConfig); } catch(e){ console.warn("Firebase init error:", e.message); }
     }
+    const ensureFirebaseDB = () => {
+      if (typeof firebase === 'undefined' || typeof firebase.database !== 'function') {
+        throw new Error('Firebase database not available');
+      }
+      return firebase.database();
+    };
     const firebaseDB = {
-      get: async (path) => { if (!firebase.database) return null; const ref = firebase.database().ref(path); const snap = await ref.once('value'); return snap.val(); },
-      push: async (path, data) => { const ref = firebase.database().ref(path).push(); await ref.set(data); return ref.key; },
-      set: async (path, data) => { await firebase.database().ref(path).set(data); },
-      update: async (path, data) => { await firebase.database().ref(path).update(data); },
-      delete: async (path) => { await firebase.database().ref(path).remove(); },
-      listen: (path, cb) => { const ref = firebase.database().ref(path); const handler = (snap) => cb(snap.val()); ref.on('value', handler); return () => ref.off('value', handler); }
+      get: async (path) => { try { const db = ensureFirebaseDB(); const snap = await db.ref(path).once('value'); return snap.val(); } catch { return null; } },
+      push: async (path, data) => { const db = ensureFirebaseDB(); const ref = db.ref(path).push(); await ref.set(data); return ref.key; },
+      set: async (path, data) => { const db = ensureFirebaseDB(); await db.ref(path).set(data); },
+      update: async (path, data) => { const db = ensureFirebaseDB(); await db.ref(path).update(data); },
+      delete: async (path) => { const db = ensureFirebaseDB(); await db.ref(path).remove(); },
+      listen: (path, cb) => { try { const db = ensureFirebaseDB(); const ref = db.ref(path); const handler = (snap) => cb(snap.val()); ref.on('value', handler); return () => ref.off('value', handler); } catch { return () => {}; } }
     };
     const firebaseAuth = {
       signIn: async (email, password) => { if (!firebase.auth) throw new Error("Firebase Auth not loaded."); return firebase.auth().signInWithEmailAndPassword(email, password); },
@@ -456,7 +462,12 @@
       toastLocked = true;
       const toast = document.createElement('div');
       toast.className = 'toast';
-      toast.innerHTML = `<div>${message}</div><div class="toast-bar"></div>`;
+      const messageDiv = document.createElement('div');
+      messageDiv.textContent = message;
+      const barDiv = document.createElement('div');
+      barDiv.className = 'toast-bar';
+      toast.appendChild(messageDiv);
+      toast.appendChild(barDiv);
       document.body.appendChild(toast);
       setTimeout(() => toast.classList.add('toast-slide-up'), 2000);
       setTimeout(() => { toastLocked = false; }, 2200);
@@ -705,6 +716,16 @@
       const [showSidebar, setShowSidebar] = useState(true);
       const messagesEndRef = useRef(null);
       const inputRef = useRef(null);
+      const abortControllerRef = useRef(null);
+
+      // Cleanup abort controller on unmount
+      useEffect(() => {
+        return () => {
+          if (abortControllerRef.current) {
+            abortControllerRef.current.abort();
+          }
+        };
+      }, []);
 
       const activeChat = chats.find(c => c.id === activeChatId);
       const messages = activeChat?.messages || [];
@@ -781,6 +802,13 @@
         setInput('');
         setLoading(true);
         
+        // Abort any previous request
+        if (abortControllerRef.current) {
+          abortControllerRef.current.abort();
+        }
+        abortControllerRef.current = new AbortController();
+        const timeoutId = setTimeout(() => abortControllerRef.current?.abort(), 60000); // 60s timeout
+        
         try {
           const chatMessages = updatedChats.find(c => c.id === chatId)?.messages || [];
           const res = await fetch('https://seltra-ai.modmojheh.workers.dev/chat', {
@@ -791,8 +819,12 @@
               generateTitle: isFirstMessage,
               bookmarklets: bookmarklets.map(b => ({ title: b.title, description: b.description })),
               websites: websites.map(w => ({ name: w.name, description: w.description, url: w.url }))
-            })
+            }),
+            signal: abortControllerRef.current.signal
           });
+          clearTimeout(timeoutId);
+          
+          if (!res.ok) throw new Error(`HTTP ${res.status}`);
           const data = await res.json();
           
           if (data.error) throw new Error(data.error);
@@ -812,6 +844,8 @@
           setChats(finalChats);
           saveChats(finalChats);
         } catch (e) {
+          clearTimeout(timeoutId);
+          if (e.name === 'AbortError') return; // Don't show error for aborted requests
           const errorMessage = { role: 'assistant', content: 'Sorry, something went wrong. Please try again.' };
           const errorChats = updatedChats.map(c => 
             c.id === chatId ? { ...c, messages: [...c.messages, errorMessage] } : c
@@ -1011,6 +1045,8 @@
       const [selectedRequest, setSelectedRequest] = useState(null);
       const [chatMessage, setChatMessage] = useState('');
       const [sendingMessage, setSendingMessage] = useState(false);
+      const [editingMessageIndex, setEditingMessageIndex] = useState(null);
+      const [editingMessageContent, setEditingMessageContent] = useState('');
       const chatEndRef = useRef(null);
       const feedbackUnsubRef = useRef(null);
 
@@ -1082,7 +1118,7 @@
         
         feedbackUnsubRef.current = unsub;
         return () => { if (unsub) unsub(); };
-      }, [open, userId, selectedRequest?.id]);
+      }, [open, userId]);
 
       const loadMyRequests = () => {
         setLoadingRequests(true);
@@ -1126,6 +1162,25 @@
           showToast('Failed to send message. Please try again.');
         } finally {
           setSendingMessage(false);
+        }
+      };
+
+      // Edit a user's own message
+      const editUserMessage = async (messageIndex) => {
+        if (!editingMessageContent.trim() || !selectedRequest) return;
+        try {
+          const updatedMessages = [...(selectedRequest.messages || [])];
+          updatedMessages[messageIndex] = {
+            ...updatedMessages[messageIndex],
+            content: editingMessageContent.trim(),
+            editedAt: Date.now()
+          };
+          await firebaseDB.update(`feedback/${selectedRequest.id}`, { messages: updatedMessages });
+          setEditingMessageIndex(null);
+          setEditingMessageContent('');
+        } catch (e) {
+          console.error('Failed to edit message:', e);
+          showToast('Failed to edit message. Please try again.');
         }
       };
 
@@ -1362,11 +1417,38 @@
                     <div className="p-3 space-y-3">
                       {selectedRequest.messages.map((msg, i) => (
                         <div key={i} className={`flex ${msg.from === 'user' ? 'justify-end' : 'justify-start'}`}>
-                          <div className={`max-w-[80%] rounded-2xl px-4 py-2 ${msg.from === 'user' ? 'bg-gradient-to-r from-orange-500 to-orange-600 text-white' : 'bg-gray-100 text-gray-800'}`}>
-                            <p className="text-sm whitespace-pre-wrap">{msg.content}</p>
-                            <p className={`text-xs mt-1 ${msg.from === 'user' ? 'text-orange-100' : 'text-gray-400'}`}>
-                              {msg.from === 'admin' ? '⭐ Seltra Team • ' : ''}{new Date(msg.timestamp).toLocaleString()}
-                            </p>
+                          <div className={`max-w-[80%] rounded-2xl px-4 py-2 ${msg.from === 'user' ? 'bg-gradient-to-r from-orange-500 to-orange-600 text-white' : 'bg-gray-100 text-gray-800'} group relative`}>
+                            {editingMessageIndex === i && msg.from === 'user' ? (
+                              <div className="space-y-2">
+                                <textarea
+                                  value={editingMessageContent}
+                                  onChange={(e) => setEditingMessageContent(e.target.value)}
+                                  className="w-full text-sm border rounded px-2 py-1 text-gray-800 min-w-[200px]"
+                                  rows={2}
+                                  autoFocus
+                                />
+                                <div className="flex gap-2 justify-end">
+                                  <button onClick={() => { setEditingMessageIndex(null); setEditingMessageContent(''); }} className="text-xs px-2 py-1 bg-gray-200 text-gray-700 rounded hover:bg-gray-300">Cancel</button>
+                                  <button onClick={() => editUserMessage(i)} className="text-xs px-2 py-1 bg-orange-500 text-white rounded hover:bg-orange-600">Save</button>
+                                </div>
+                              </div>
+                            ) : (
+                              <>
+                                <p className="text-sm whitespace-pre-wrap">{msg.content}</p>
+                                <p className={`text-xs mt-1 ${msg.from === 'user' ? 'text-orange-100' : 'text-gray-400'}`}>
+                                  {msg.from === 'admin' ? '⭐ Seltra Team • ' : ''}{new Date(msg.timestamp).toLocaleString()}{msg.editedAt ? ' (edited)' : ''}
+                                </p>
+                                {msg.from === 'user' && (
+                                  <button
+                                    onClick={() => { setEditingMessageIndex(i); setEditingMessageContent(msg.content); }}
+                                    className="absolute -top-2 -right-2 w-6 h-6 bg-white border border-gray-200 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition shadow-sm hover:bg-gray-50"
+                                    title="Edit message"
+                                  >
+                                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#666" strokeWidth="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                                  </button>
+                                )}
+                              </>
+                            )}
                           </div>
                         </div>
                       ))}
@@ -1775,10 +1857,13 @@
 
       // Real-time listener for feedback updates (for notification badge)
       useEffect(() => {
+        let isMounted = true;
+        let popupTimerId = null;
         const userId = getOrCreateUserId();
         const lastViewed = parseInt(localStorage.getItem('seltra_requests_viewed') || '0');
         
         const unsub = firebaseDB.listen('feedback', (data) => {
+          if (!isMounted) return;
           if (!data) { setUnreadUpdates(0); return; }
           
           const myFeedback = Object.keys(data)
@@ -1798,13 +1883,19 @@
           // Show popup for new updates (only once per session)
           if (unread > 0) {
             const dismissed = sessionStorage.getItem('seltra_update_popup_dismissed');
-            if (!dismissed) {
-              setTimeout(() => setShowUpdatePopup(true), 1500);
+            if (!dismissed && !popupTimerId) {
+              popupTimerId = setTimeout(() => {
+                if (isMounted) setShowUpdatePopup(true);
+              }, 1500);
             }
           }
         });
         
-        return () => unsub();
+        return () => {
+          isMounted = false;
+          if (popupTimerId) clearTimeout(popupTimerId);
+          unsub();
+        };
       }, []);
 
       const dismissPopup = () => {
@@ -2214,6 +2305,25 @@
         }
       }
 
+      async function editAdminMessage(feedbackId, messageIndex, newContent) {
+        try {
+          const fb = await firebaseDB.get(`feedback/${feedbackId}`);
+          const messages = fb.messages || [];
+          if (messages[messageIndex] && messages[messageIndex].from === 'admin') {
+            messages[messageIndex] = {
+              ...messages[messageIndex],
+              content: newContent,
+              editedAt: Date.now()
+            };
+            await firebaseDB.update(`feedback/${feedbackId}`, { messages });
+            showToast('Message edited');
+          }
+        } catch (e) {
+          console.error(e);
+          showToast('Failed to edit message');
+        }
+      }
+
       async function deleteFeedback(id) {
         if (!confirm('Delete this feedback?')) return;
         try {
@@ -2382,16 +2492,20 @@
                     <div className="space-y-4">
                       {feedback.length === 0 && <p className="text-gray-500 text-center py-8">No feedback yet.</p>}
                       {feedback.map(f => {
-                        const typeColors = { bug: 'red', bookmarklet: 'purple', feature: 'blue', other: 'green' };
+                        // Full class maps for Tailwind purge compatibility
+                        const typeBorderClasses = { bug: 'border-red-400', bookmarklet: 'border-purple-400', feature: 'border-blue-400', other: 'border-green-400' };
+                        const typeBgClasses = { bug: 'bg-red-100', bookmarklet: 'bg-purple-100', feature: 'bg-blue-100', other: 'bg-green-100' };
+                        const typeTextClasses = { bug: 'text-red-700', bookmarklet: 'text-purple-700', feature: 'text-blue-700', other: 'text-green-700' };
+                        const statusBgClasses = { new: 'bg-yellow-100', 'in-progress': 'bg-blue-100', done: 'bg-green-100', rejected: 'bg-red-100' };
+                        const statusTextClasses = { new: 'text-yellow-700', 'in-progress': 'text-blue-700', done: 'text-green-700', rejected: 'text-red-700' };
                         const typeLabels = { bug: '🐛 Bug', bookmarklet: '✨ Bookmarklet Request', feature: '💡 Feature', other: '💬 Other' };
-                        const statusColors = { new: 'yellow', 'in-progress': 'blue', done: 'green', rejected: 'red' };
                         return (
-                          <div key={f.id} className={`p-4 rounded-lg border-l-4 bg-gray-50 border-${typeColors[f.type] || 'gray'}-400`}>
+                          <div key={f.id} className={`p-4 rounded-lg border-l-4 bg-gray-50 ${typeBorderClasses[f.type] || 'border-gray-400'}`}>
                             <div className="flex items-start justify-between gap-4">
                               <div className="flex-1">
                                 <div className="flex items-center gap-2 mb-1">
-                                  <span className={`text-xs px-2 py-0.5 rounded bg-${typeColors[f.type] || 'gray'}-100 text-${typeColors[f.type] || 'gray'}-700`}>{typeLabels[f.type] || f.type}</span>
-                                  <span className={`text-xs px-2 py-0.5 rounded bg-${statusColors[f.status] || 'gray'}-100 text-${statusColors[f.status] || 'gray'}-700`}>{f.status}</span>
+                                  <span className={`text-xs px-2 py-0.5 rounded ${typeBgClasses[f.type] || 'bg-gray-100'} ${typeTextClasses[f.type] || 'text-gray-700'}`}>{typeLabels[f.type] || f.type}</span>
+                                  <span className={`text-xs px-2 py-0.5 rounded ${statusBgClasses[f.status] || 'bg-gray-100'} ${statusTextClasses[f.status] || 'text-gray-700'}`}>{f.status}</span>
                                   {f.messages && f.messages.length > 0 && (
                                     <span className="text-xs px-2 py-0.5 rounded bg-purple-100 text-purple-700">💬 {f.messages.length} messages</span>
                                   )}
@@ -2417,10 +2531,64 @@
                                     ) : (
                                       <div className="p-2 space-y-2">
                                         {f.messages.map((msg, i) => (
-                                          <div key={i} className={`text-xs p-2 rounded-lg ${msg.from === 'admin' ? 'bg-orange-50 ml-4' : 'bg-gray-100 mr-4'}`}>
+                                          <div key={i} className={`text-xs p-2 rounded-lg ${msg.from === 'admin' ? 'bg-orange-50 ml-4' : 'bg-gray-100 mr-4'} group relative`}>
                                             <div className="font-medium mb-0.5">{msg.from === 'admin' ? '⭐ You (Admin)' : '👤 User'}</div>
-                                            <p className="text-gray-700 whitespace-pre-wrap">{msg.content}</p>
-                                            <span className="text-gray-400 text-[10px]">{new Date(msg.timestamp).toLocaleString()}</span>
+                                            <p className="text-gray-700 whitespace-pre-wrap" id={`msg-content-${f.id}-${i}`}>{msg.content}</p>
+                                            <span className="text-gray-400 text-[10px]">{new Date(msg.timestamp).toLocaleString()}{msg.editedAt ? ' (edited)' : ''}</span>
+                                            {msg.from === 'admin' && (
+                                              <button
+                                                onClick={() => {
+                                                  const editInput = document.getElementById(`edit-msg-${f.id}-${i}`);
+                                                  const contentEl = document.getElementById(`msg-content-${f.id}-${i}`);
+                                                  const editContainer = document.getElementById(`edit-container-${f.id}-${i}`);
+                                                  if (editInput && contentEl && editContainer) {
+                                                    editInput.value = msg.content;
+                                                    contentEl.style.display = 'none';
+                                                    editContainer.style.display = 'block';
+                                                    editInput.focus();
+                                                  }
+                                                }}
+                                                className="absolute top-1 right-1 w-5 h-5 bg-white border border-gray-200 rounded flex items-center justify-center opacity-0 group-hover:opacity-100 transition shadow-sm hover:bg-gray-50"
+                                                title="Edit message"
+                                              >
+                                                <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#666" strokeWidth="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                                              </button>
+                                            )}
+                                            <div id={`edit-container-${f.id}-${i}`} style={{display: 'none'}} className="mt-2">
+                                              <textarea
+                                                id={`edit-msg-${f.id}-${i}`}
+                                                className="w-full text-xs border rounded px-2 py-1 text-gray-800"
+                                                rows={2}
+                                              />
+                                              <div className="flex gap-1 mt-1 justify-end">
+                                                <button
+                                                  onClick={() => {
+                                                    const contentEl = document.getElementById(`msg-content-${f.id}-${i}`);
+                                                    const editContainer = document.getElementById(`edit-container-${f.id}-${i}`);
+                                                    if (contentEl && editContainer) {
+                                                      contentEl.style.display = 'block';
+                                                      editContainer.style.display = 'none';
+                                                    }
+                                                  }}
+                                                  className="text-[10px] px-2 py-0.5 bg-gray-200 text-gray-700 rounded hover:bg-gray-300"
+                                                >Cancel</button>
+                                                <button
+                                                  onClick={async () => {
+                                                    const editInput = document.getElementById(`edit-msg-${f.id}-${i}`);
+                                                    const contentEl = document.getElementById(`msg-content-${f.id}-${i}`);
+                                                    const editContainer = document.getElementById(`edit-container-${f.id}-${i}`);
+                                                    if (editInput && editInput.value.trim()) {
+                                                      await editAdminMessage(f.id, i, editInput.value.trim());
+                                                      if (contentEl && editContainer) {
+                                                        contentEl.style.display = 'block';
+                                                        editContainer.style.display = 'none';
+                                                      }
+                                                    }
+                                                  }}
+                                                  className="text-[10px] px-2 py-0.5 bg-orange-500 text-white rounded hover:bg-orange-600"
+                                                >Save</button>
+                                              </div>
+                                            </div>
                                           </div>
                                         ))}
                                       </div>

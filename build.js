@@ -29,10 +29,9 @@ async function build() {
   let compiledCode = result.outputFiles[0].text;
   
   if (!isMinify) {
-    // Simple whitespace reduction without breaking code
+    // Only collapse multiple empty lines, don't strip leading whitespace (breaks template literals)
     compiledCode = compiledCode
-      .replace(/\n\s*\n/g, '\n') // Remove empty lines
-      .replace(/\n\s+/g, '\n') // Remove leading whitespace on lines
+      .replace(/\n\s*\n/g, '\n')
       .trim();
   }
   

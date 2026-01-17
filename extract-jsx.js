@@ -17,8 +17,14 @@ if (!babelScriptMatch) {
 
 const jsxCode = babelScriptMatch[1];
 
+// Ensure src directory exists
+const srcDir = path.join(__dirname, 'src');
+if (!fs.existsSync(srcDir)) {
+  fs.mkdirSync(srcDir, { recursive: true });
+}
+
 // Write the JSX to a temp file
-fs.writeFileSync(path.join(__dirname, 'src', 'app.jsx'), jsxCode);
+fs.writeFileSync(path.join(srcDir, 'app.jsx'), jsxCode);
 
 console.log('Extracted JSX code to src/app.jsx');
 console.log('Now run: npm run build');
