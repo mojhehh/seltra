@@ -1523,6 +1523,9 @@
         return () => clearTimeout(timer);
       }, []);
 
+      // Track the last known unread count to detect new updates
+      const lastUnreadCountRef = useRef(0);
+
       // Real-time listener for feedback updates (for notification badge)
       useEffect(() => {
         let isMounted = true;
@@ -1531,7 +1534,7 @@
         
         const unsub = firebaseDB.listen('feedback', (data) => {
           if (!isMounted) return;
-          if (!data) { setUnreadUpdates(0); return; }
+          if (!data) { setUnreadUpdates(0); lastUnreadCountRef.current = 0; return; }
           
           // Get fresh lastViewed time on each update
           const lastViewed = parseInt(localStorage.getItem('seltra_requests_viewed') || '0');
@@ -1550,15 +1553,16 @@
           
           setUnreadUpdates(unread);
           
-          // Show popup for new updates (only once per session)
-          if (unread > 0) {
-            const dismissed = sessionStorage.getItem('seltra_update_popup_dismissed');
-            if (!dismissed && !popupTimerId) {
-              popupTimerId = setTimeout(() => {
-                if (isMounted) setShowUpdatePopup(true);
-              }, 1500);
-            }
+          // Show popup when unread count INCREASES (new update arrived)
+          if (unread > lastUnreadCountRef.current && unread > 0) {
+            // Clear any existing timer
+            if (popupTimerId) clearTimeout(popupTimerId);
+            popupTimerId = setTimeout(() => {
+              if (isMounted) setShowUpdatePopup(true);
+            }, 1500);
           }
+          
+          lastUnreadCountRef.current = unread;
         });
         
         return () => {
@@ -1570,12 +1574,10 @@
 
       const dismissPopup = () => {
         setShowUpdatePopup(false);
-        sessionStorage.setItem('seltra_update_popup_dismissed', 'true');
       };
 
       const openSupportFromPopup = () => {
         setShowUpdatePopup(false);
-        sessionStorage.setItem('seltra_update_popup_dismissed', 'true');
         setShowSupport(true);
       };
 
