@@ -1079,10 +1079,12 @@
                     </div>
                   ) : (
                     <div className="p-3 space-y-3">
-                      {selectedRequest.messages.map((msg, i) => (
-                        <div key={i} className={`flex ${msg.from === 'user' ? 'justify-end' : 'justify-start'}`}>
+                      {(Array.isArray(selectedRequest.messages) ? selectedRequest.messages : []).map((msg, originalIndex) => {
+                        if (!msg || !msg.content) return null;
+                        return (
+                        <div key={msg.timestamp || originalIndex} className={`flex ${msg.from === 'user' ? 'justify-end' : 'justify-start'}`}>
                           <div className={`max-w-[80%] rounded-2xl px-4 py-2 ${msg.from === 'user' ? 'bg-gradient-to-r from-orange-500 to-orange-600 text-white' : 'bg-gray-100 text-gray-800'} group relative`}>
-                            {editingMessageIndex === i && msg.from === 'user' ? (
+                            {editingMessageIndex === originalIndex && msg.from === 'user' ? (
                               <div className="space-y-2">
                                 <textarea
                                   value={editingMessageContent}
@@ -1093,18 +1095,18 @@
                                 />
                                 <div className="flex gap-2 justify-end">
                                   <button onClick={() => { setEditingMessageIndex(null); setEditingMessageContent(''); }} className="text-xs px-2 py-1 bg-gray-200 text-gray-700 rounded hover:bg-gray-300">Cancel</button>
-                                  <button onClick={() => editUserMessage(i)} className="text-xs px-2 py-1 bg-orange-500 text-white rounded hover:bg-orange-600">Save</button>
+                                  <button onClick={() => editUserMessage(originalIndex)} className="text-xs px-2 py-1 bg-orange-500 text-white rounded hover:bg-orange-600">Save</button>
                                 </div>
                               </div>
                             ) : (
                               <>
-                                <p className="text-sm whitespace-pre-wrap">{msg.content}</p>
+                                <p className="text-sm whitespace-pre-wrap break-words">{msg.content}</p>
                                 <p className={`text-xs mt-1 ${msg.from === 'user' ? 'text-orange-100' : 'text-gray-400'}`}>
-                                  {msg.from === 'admin' ? '⭐ Seltra Team • ' : ''}{new Date(msg.timestamp).toLocaleString()}{msg.editedAt ? ' (edited)' : ''}
+                                  {msg.from === 'admin' ? '⭐ Seltra Team • ' : ''}{msg.timestamp ? new Date(msg.timestamp).toLocaleString() : ''}{msg.editedAt ? ' (edited)' : ''}
                                 </p>
                                 {msg.from === 'user' && (
                                   <button
-                                    onClick={() => { setEditingMessageIndex(i); setEditingMessageContent(msg.content); }}
+                                    onClick={() => { setEditingMessageIndex(originalIndex); setEditingMessageContent(msg.content); }}
                                     className="absolute -top-2 -right-2 w-6 h-6 bg-white border border-gray-200 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition shadow-sm hover:bg-gray-50"
                                     title="Edit message"
                                   >
@@ -1115,7 +1117,8 @@
                             )}
                           </div>
                         </div>
-                      ))}
+                        );
+                      })}
                       <div ref={chatEndRef} />
                     </div>
                   )}
@@ -2190,15 +2193,17 @@
                                 <div className="mt-3 pt-3 border-t border-gray-200">
                                   <label className="text-xs font-medium text-purple-600 block mb-2">💬 Chat with User:</label>
                                   <div className="bg-white border rounded-lg max-h-48 overflow-y-auto scrollbar-thin mb-2">
-                                    {(!f.messages || f.messages.length === 0) ? (
+                                    {(!f.messages || !Array.isArray(f.messages) || f.messages.length === 0) ? (
                                       <p className="text-xs text-gray-400 text-center py-3">No chat messages yet</p>
                                     ) : (
                                       <div className="p-2 space-y-2">
-                                        {f.messages.map((msg, i) => (
-                                          <div key={i} className={`text-xs p-2 rounded-lg ${msg.from === 'admin' ? 'bg-orange-50 ml-4' : 'bg-gray-100 mr-4'} group relative`}>
+                                        {f.messages.map((msg, i) => {
+                                          if (!msg || !msg.content) return null;
+                                          return (
+                                          <div key={msg.timestamp || i} className={`text-xs p-2 rounded-lg ${msg.from === 'admin' ? 'bg-orange-50 ml-4' : 'bg-gray-100 mr-4'} group relative`}>
                                             <div className="font-medium mb-0.5">{msg.from === 'admin' ? '⭐ You (Admin)' : '👤 User'}</div>
-                                            <p className="text-gray-700 whitespace-pre-wrap" id={`msg-content-${f.id}-${i}`}>{msg.content}</p>
-                                            <span className="text-gray-400 text-[10px]">{new Date(msg.timestamp).toLocaleString()}{msg.editedAt ? ' (edited)' : ''}</span>
+                                            <p className="text-gray-700 whitespace-pre-wrap break-words" id={`msg-content-${f.id}-${i}`}>{msg.content}</p>
+                                            <span className="text-gray-400 text-[10px]">{msg.timestamp ? new Date(msg.timestamp).toLocaleString() : ''}{msg.editedAt ? ' (edited)' : ''}</span>
                                             {msg.from === 'admin' && (
                                               <button
                                                 onClick={() => {
@@ -2254,7 +2259,8 @@
                                               </div>
                                             </div>
                                           </div>
-                                        ))}
+                                          );
+                                        })}
                                       </div>
                                     )}
                                   </div>
